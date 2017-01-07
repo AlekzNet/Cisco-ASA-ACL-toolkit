@@ -21,6 +21,9 @@ optional arguments:
   --acl ACL    Cisco ASA ACL filename
   --sd SD      Where to search: source, dest or both
   --noany      Ignore 'any' in the ACLs
+  --deny       Search 'deny' rules only
+  --permit     Search 'permit' rules only
+
 ```
 
 Examples:
@@ -43,4 +46,8 @@ Search for 10.2.3.0/24 in both source and destination, but ignore "any":
 python ipaclmatch.py --noany --addr 10.2.3.0/24 --acl ACL_name.acl 
 ```
 
+Search deny rules with 10.2.3.0/24 in the destination and ignore "any" (in the dest):
 
+```txt
+python ipaclmatch.py --noany --addr 10.2.3.0/24 --acl ACL_name.acl --deny --sd dest
+```
