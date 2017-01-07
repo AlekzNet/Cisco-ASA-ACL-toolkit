@@ -12,17 +12,19 @@ parser.add_argument('--sd', default='both', help="Where to search: source, dest 
 parser.add_argument('--noany', help="Ignore \'any\' in the ACLs", action="store_true")
 parser.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true")
 parser.add_argument('--permit', help="Search \'permit\' rules only" , action="store_true")
+parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 args = parser.parse_args()
 
 # True if the IP belongs to the Source IP
 def issrc():
 	if "host" in arr[7]: 
 		ip = arr[8]
-		mask = "32"
+		mask = "255.255.255.255"
 	else:
 		ip = arr[7]	
 		mask = arr[8]	
-	if ip == "0.0.0.0" and args.noany : return False
+	if args.direct:	return isdir(ip,mask)
+	if ip == "0.0.0.0" and args.noany : return False		
 	temp_set.add(IPNetwork(ip + "/" + mask))
 	return ips.intersection(temp_set)
 
@@ -31,18 +33,34 @@ def isdst():
 	if "range" in arr[9]: del arr[9:12]
 	if "host" in arr[9]: 
 		ip = arr[10]
-		mask = "32"
+		mask = "255.255.255.255"
 	else:
 		ip = arr[9]	
 		mask = arr[10]	
+	if args.direct: return isdir(ip,mask)	
 	if ip == "0.0.0.0" and args.noany : return False		
 	temp_set.add(IPNetwork(ip + "/" + mask))
 	return ips.intersection(temp_set) 
 
+# True if there is a direct match
+def isdir(ip,mask):
+	result = False
+	for i in ips:
+#		print IPNetwork(i).ip, IPNetwork(i).netmask,ip,mask
+		result = result or ( str(IPNetwork(i).ip) == ip and str(IPNetwork(i).netmask) == mask )
+#		print result
+	return result	
+	
 # Postformat the ACL and print
 def print_acl():
-	print re.sub('0.0.0.0 0.0.0.0','any',line)
+	print re.sub(r'0.0.0.0 0.0.0.0','any',line)
 
+
+
+
+if args.deny and args.permit:
+	print "--deny and --permit are mutually exclusive"
+	quit()
 
 ips = IPSet()
 
