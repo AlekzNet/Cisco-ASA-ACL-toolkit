@@ -54,7 +54,7 @@ Search deny rules with 10.2.3.0/24 in the destination and ignore "any" (in the d
 python ipaclmatch.py --noany --addr 10.2.3.0/24 --acl ACL_name.acl --deny --sd dest
 ```
 
-Search direct only matches (no subnets, supernets, etc, will be looked for) for 10.2.3.0/24 as the source address:
+List direct only matches (no subnets, supernets, etc, will be looked for) for 10.2.3.0/24 as the source address:
 
 ```txt
 python ipaclmatch.py --noany --addr 10.2.3.0/24 --acl ACL_name.acl --sd dest --direct
