@@ -1,5 +1,5 @@
 # Cisco-ASA-ACL-toolkit
-Utilities for parsing, analyzing and modifuing Cisco ASA ACLs
+Utilities for parsing, analyzing and modifying Cisco ASA ACLs
 
 Install netaddr:
 
@@ -10,6 +10,20 @@ pip install netaddr
 ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, subnetworks and supernets.
 
 Usage:
+
+```txt
+ ipaclmatch.py --help
+usage: ipaclmatch.py [-h] [--addr ADDR] [--acl ACL] [--sd SD] [--noany]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --addr ADDR  Comma-separated list of addresses/netmasks
+  --acl ACL    Cisco ASA ACL filename
+  --sd SD      Where to search: source, dest or both
+  --noany      Ignore 'any' in the ACLs
+```
+
+Examples:
 
 Save the access group using the following command in a file, for example ACL_name.acl:
 
