@@ -23,6 +23,7 @@ optional arguments:
   --noany      Ignore 'any' in the ACLs
   --deny       Search 'deny' rules only
   --permit     Search 'permit' rules only
+  --direct     Direct IP match only
 
 ```
 
