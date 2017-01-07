@@ -1,6 +1,12 @@
 # Cisco-ASA-ACL-toolkit
 Utilities for parsing, analyzing and modifuing Cisco ASA ACLs
 
+Install netaddr:
+
+```sh
+pip install netaddr
+```
+
 ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, subnetworks and supernets.
 
 Usage:
