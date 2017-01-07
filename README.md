@@ -36,7 +36,7 @@ Save the access group using the following command in a file, for example ACL_nam
 sh access-list ACL-name
 ```
 
-Search only the source addresses for 10.0.1.2/32 and 10.2.3.0/24:
+Search only the source addresses for 10.0.1.2/32 and 10.2.3.0/24 and networks these addresses contain or belong to (for example, 10/8, 10.2.3.128/25, 10.2.3.4/32, etc):
 
 ```txt
 python ipaclmatch.py --addr 10.0.1.2,10.2.3.0/24 --acl ACL_name.acl --sd source
