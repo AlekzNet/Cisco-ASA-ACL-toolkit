@@ -60,7 +60,7 @@ for line in f:
 
 	# Remove leftovers
 	if " remark " in line or "object-group" in line or not "extended" in line: continue
-	line=re.sub(r'\(hit.*$','',line)
+	line=re.sub(r'\(hitcnt.*$','',line)
 	line=re.sub(r'<--- More --->','',line)
 	line = line.strip()	
 	
