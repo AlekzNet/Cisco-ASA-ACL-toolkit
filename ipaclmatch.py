@@ -10,6 +10,8 @@ parser.add_argument('--addr', default='0.0.0.0/0', help="Comma-separated list of
 parser.add_argument('--acl', default='es_nsn-partner.acl', help="Cisco ASA ACL filename")
 parser.add_argument('--sd', default='both', help="Where to search: source, dest or both")
 parser.add_argument('--noany', help="Ignore \'any\' in the ACLs", action="store_true")
+parser.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true")
+parser.add_argument('--permit', help="Search \'permit\' rules only" , action="store_true")
 args = parser.parse_args()
 
 # True if the IP belongs to the Source IP
@@ -68,6 +70,12 @@ for line in f:
 	line=re.sub('any','0.0.0.0 0.0.0.0',line)
 		
 	arr = line.split(" ")
+	
+	# We are not interested in permit lines, if --deny is set
+	if args.deny and not "deny" in arr[5]: continue
+
+	# We are not interested in deny lines, if --permit is set
+	if args.permit and "deny" in arr[5]: continue
 
 	if "source" in args.sd:
 		if issrc(): print_acl()
