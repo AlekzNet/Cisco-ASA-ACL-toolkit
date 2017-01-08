@@ -11,7 +11,7 @@ parser.add_argument('acl', help="Cisco ASA ACL filename")
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s', '--src', help="Search the source", action="store_true")
 sd.add_argument('-d', '--dst', help="Search the destination", action="store_true")
-sd.add_argument('-b', '--both', help="Search both the source and the destination", action="store_true")
+sd.add_argument('-b', '--both', help="Search both the source and the destination (default)", action="store_true")
 parser.add_argument('--noany', help="Ignore \'any\' in the ACLs", action="store_true")
 dp = parser.add_mutually_exclusive_group()
 dp.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true")
@@ -55,6 +55,7 @@ def isdir(ip,mask):
 		result = result or ( str(IPNetwork(i).ip) == ip and str(IPNetwork(i).netmask) == mask )
 	return result	
 
+# Does any of the IP-addresses we are searching for belong to the current IP network?
 def isinnet(ip,mask):
 	result = False
 	for i in ips:
@@ -86,9 +87,7 @@ def print_acl():
 			prepsvc()
 			print arr[7],arr[8],arr[11]
 			
-	else: print re.sub(r'0.0.0.0 0.0.0.0','any',line)
-#	print re.sub(r'0.0.0.0 0.0.0.0','any',line)
-
+	else: print line.replace('0.0.0.0 0.0.0.0','any')
 
 # Put the service in arr[11] in the form of tcp-1234, udp-12345-3456, or *
 def prepsvc():
@@ -96,9 +95,9 @@ def prepsvc():
 		print line
 		quit("Unknown protocol "+arr[6])
 	if "ip" in arr[6]: arr.insert(11,"*")
-	elif "range" in arr[11]: arr[11] = arr[6]+'-'+arr[12]+'-'+arr[13]
-	elif "eq" in arr[11]: arr[11] = arr[6]+'-'+arr[12]
-	elif "gt" in arr[11]: arr[11] = arr[6]+'+'+arr[12]
+	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'='+arr[13]
+	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
+	elif "gt" in arr[11]: arr[11] = arr[6]+':+'+arr[12]
 	else:
 		print line
 		quit("Unknown operator "+arr[11])		
@@ -110,36 +109,32 @@ if args.both and args.direct:
 if args.both and args.transform:
 	quit("--transform requires either --src or --dst. --transform cannot be used with --both")
 
-# IPSet with the IP-addresses to search for
-#ips = IPSet()
+
 ips = []
+arr = []
 
 # If a list of IP's is given, add them all
 if "," in args.addr:
 	for i in args.addr.split(","):
-#		ips.add(IPNetwork(i))
 		ips.append(IPNetwork(i))
 else:
 		ips.append(IPNetwork(args.addr))	
 	
-arr = []
-#temp_set = IPSet()
-#temp_set.clear()
 f = open (args.acl,"r")
 
 for line in f:
 
 	# Remove leftovers
-	if " remark " in line or "object-group" in line or not "extended" in line: continue
+	if "remark" in line or "object-group" in line or not "extended" in line: continue
 	line=re.sub(r'\(hitcnt.*$','',line)		#remove hitcounters
 	line=re.sub(r' log .*$','',line)		#remove logging statements
-	line=re.sub(r'<--- More --->','',line)
+	line=line.replace(r'<--- More --->','')
 	line = line.strip()	
 	
 	# Replace any with 0/0
-	line=re.sub('any','0.0.0.0 0.0.0.0',line)
-		
-	arr = line.split(" ")
+	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
+
+	arr = line.split()
 	
 	# We are not interested in permit lines, if --deny is set
 	if args.deny and not "deny" in arr[5]: continue
@@ -156,7 +151,6 @@ for line in f:
 	elif args.both:
 		if issrc() or isdst(): print_acl()
 
-#	temp_set.clear()
 	del arr[:]		
 	
 f.close()		
