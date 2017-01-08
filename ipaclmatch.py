@@ -18,6 +18,8 @@ dp.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true
 dp.add_argument('--permit', help="Search \'permit\' rules only" , action="store_true")
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 parser.add_argument('-t','--transform', help='Transform the output', action="store_true")
+parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
+parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
 args = parser.parse_args()
 if not args.src and not args.dst and not args.both: args.both = True
 
@@ -31,8 +33,9 @@ def issrc():
 		arr[8] = "255.255.255.255"
 	
 	if args.direct:	return isdir(arr[7],arr[8])
-	if arr[7] == "0.0.0.0" and args.noany : return False		
-	return isinnet(arr[7],arr[8])
+	if arr[7] == "0.0.0.0" and args.noany : return False	
+	if args.contain: return isnetin(arr[7],arr[8])
+	else: return isinnet(arr[7],arr[8])
 
 # True if the IP belongs to the Dest IP	
 # arr[9] -- dest IP-address or host
@@ -44,8 +47,9 @@ def isdst():
 		arr[10] = "255.255.255.255"
 	
 	if args.direct: return isdir(arr[9],arr[10])	
-	if arr[9] == "0.0.0.0" and args.noany : return False		
-	return isinnet(arr[9],arr[10]) 
+	if arr[9] == "0.0.0.0" and args.noany : return False	
+	if 	args.contain: return isnetin(arr[9],arr[10])
+	else: return isinnet(arr[9],arr[10]) 
 
 # True if there is a direct match
 # Go through all IP's in ips and compare with the ip and mask from the ACL
@@ -61,6 +65,13 @@ def isinnet(ip,mask):
 	for i in ips:
 		result = result or i in IPNetwork(ip + "/" + mask)
 	return result		
+
+# Does any of the IP-addresses we are searching for contains the current IP network?
+def isnetin(ip,mask):
+	result = False
+	for i in ips:
+		result = result or IPNetwork(ip + "/" + mask) in i
+	return result
 		
 # Postformat the ACL and print
 # arr[6] - protocol (ip, tcp, udp)
@@ -72,6 +83,7 @@ def isinnet(ip,mask):
 # arr[12]- port or port1
 # arr[13]- port2 or nothing
 def print_acl():
+	tmp = line
 	if args.transform:
 		if "icmp" in arr[6]: return
 		if args.src:
@@ -86,23 +98,20 @@ def print_acl():
 				arr[8] = "255.255.255.255"
 			prepsvc()
 			print arr[7],arr[8],arr[11]
-			
-	else: print line.replace('0.0.0.0 0.0.0.0','any')
+			return
+	elif args.noline:
+		tmp=re.sub(r'\bline\b \d+ ','',tmp)
+	print tmp.replace('0.0.0.0 0.0.0.0','any')
 
 # Put the service in arr[11] in the form of tcp-1234, udp-12345-3456, or *
 def prepsvc():
-	if not "ip" in arr[6] and not "tcp" in arr[6] and not "udp" in arr[6]:
-		print line
-		quit("Unknown protocol "+arr[6])
 	if "ip" in arr[6]: arr.insert(11,"*")
 	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'='+arr[13]
+	elif "neq" in arr[11]: arr[11] = arr[6]+'!'+arr[12]
 	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
-	elif "gt" in arr[11]: arr[11] = arr[6]+':+'+arr[12]
-	else:
-		print line
-		quit("Unknown operator "+arr[11])		
-
-
+	elif "gt" in arr[11]: arr[11] = arr[6]+'>'+arr[12]
+	elif "lt" in arr[11]: arr[11] = arr[6]+'<'+arr[12]
+	else: arr[11] = arr[6]			
 	
 if args.both and args.direct:
 	quit("--direct requires either --src or --dst. --both cannot be used with --direct")
