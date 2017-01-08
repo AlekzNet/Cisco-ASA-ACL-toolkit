@@ -65,5 +65,11 @@ python ipaclmatch.py --noany -a 10.2.3.0/24 -d --deny ACL_name.acl
 List direct only matches (no subnets, supernets, etc, will be looked for) for 10.2.3.0/24 as the source address:
 
 ```txt
-python ipaclmatch.py --noany -a 10.2.3.0/24 -d --direct ACL_name.acl -
+python ipaclmatch.py --noany -a 10.2.3.0/24 -d --direct ACL_name.acl
+```
+
+Output only the Dest-IP, Dest-Mask, and service (in the form of tcp-1224, udp-20000-30000, or `*`) corresponding to SourceIP=10.2.3.0/24 and all networks it belongs to:
+
+```txt
+python ipaclmatch.py  -a 10.2.3.0/24 -s -t ACL_name.acl
 ```
