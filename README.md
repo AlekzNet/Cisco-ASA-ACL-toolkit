@@ -13,9 +13,9 @@ ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, th
 Usage:
 
 ```txt
-ipaclmatch.py -h
 usage: ipaclmatch.py [-h] [-a ADDR] [-s | -d | -b] [--noany]
-                     [--deny | --permit] [--direct] [-t]
+                     [--deny | --permit] [--direct] [-t] [--contain]
+                     [--noline]
                      acl
 
 positional arguments:
@@ -26,14 +26,15 @@ optional arguments:
   -a ADDR, --addr ADDR  Comma-separated list of addresses/netmasks
   -s, --src             Search the source
   -d, --dst             Search the destination
-  -b, --both            Search both the source and the destination
+  -b, --both            Search both the source and the destination (default)
   --noany               Ignore 'any' in the ACLs
   --deny                Search 'deny' rules only
   --permit              Search 'permit' rules only
   --direct              Direct IP match only
   -t, --transform       Transform the output
-
-
+  --contain             Direct matches and subnets (not direct and uppernets).
+                        Assumes --noany
+  --noline              Removes line number from the output
 ```
 
 Examples:
@@ -76,6 +77,18 @@ List direct only matches (no subnets, supernets, etc, will be looked for) for 10
 
 ```txt
 python ipaclmatch.py --noany -a 10.2.3.0/24 -d --direct ACL_name.acl
+```
+Search for 10.2.0.1 in the source and remove line numbers:
+
+```txt
+python ipaclmatch.py -a 10.2.0.1 -s --noline ACL_name.acl
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq ldap 
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10389 
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10391 
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10393 
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10395 
+access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10636 
+. . .
 ```
 
 Output only the Dest-IP, Dest-Mask, and service (in the form of `tcp:1224`, `tcp:20000=30000`, `udp:+30000`, or `*`) corresponding to SourceIP=10.2.3.0/24 and all networks it belongs to:
