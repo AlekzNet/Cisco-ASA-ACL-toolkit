@@ -42,6 +42,16 @@ Save the access group using the following command in a file, for example ACL_nam
 
 ```txt
 sh access-list ACL-name
+. . .
+access-list FW_ACL_lab line 3 remark 22-01-2016 Alex 13-Feb-2016 test entries
+access-list FW_ACL_lab line 4 extended permit tcp object-group group1 object-group group2 object-group group3 0x18972f28 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq ldap (hitcnt=0) 0x6e3a516f 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10389 (hitcnt=0) 0x771e885b 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10391 (hitcnt=0) 0x7055a227 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10393 (hitcnt=0) 0x1fdbe0d8 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10395 (hitcnt=0) 0xbd11fc51 
+  access-list FW_ACL_lab line 4 extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 eq 10636 (hitcnt=0) 0xc47c2cf2 
+. . .
 ```
 
 Search only the source addresses for 10.0.1.2/32 and 10.2.3.0/24 and networks these addresses belong to (for example, 10/8, 10.2.3.128/25, 10.2.3.4/32, etc):
