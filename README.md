@@ -1,5 +1,5 @@
 # Cisco-ASA-ACL-toolkit
-Utilities for parsing, analyzing and modifying Cisco ASA ACLs
+Utilities for parsing, analyzing and modifying Cisco ASA ACLs. Useful for troubleshooting, migrating a subset of rules to another firewall, removing overlapping rules, rules aggregation, etc.
 
 Install netaddr:
 
