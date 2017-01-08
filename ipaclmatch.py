@@ -19,6 +19,8 @@ dp.add_argument('--permit', help="Search \'permit\' rules only" , action="store_
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 parser.add_argument('-t','--transform', help='Transform the output', action="store_true")
 args = parser.parse_args()
+if not args.src and not args.dst and not args.both: args.both = True
+
 
 # True if the IP belongs to the Source IP
 # arr[7] -- source IP-address or host
@@ -30,8 +32,7 @@ def issrc():
 	
 	if args.direct:	return isdir(arr[7],arr[8])
 	if arr[7] == "0.0.0.0" and args.noany : return False		
-	temp_set.add(IPNetwork(arr[7] + "/" + arr[8]))
-	return ips.intersection(temp_set)
+	return isinnet(arr[7],arr[8])
 
 # True if the IP belongs to the Dest IP	
 # arr[9] -- dest IP-address or host
@@ -44,8 +45,7 @@ def isdst():
 	
 	if args.direct: return isdir(arr[9],arr[10])	
 	if arr[9] == "0.0.0.0" and args.noany : return False		
-	temp_set.add(IPNetwork(arr[9] + "/" + arr[10]))
-	return ips.intersection(temp_set) 
+	return isinnet(arr[9],arr[10]) 
 
 # True if there is a direct match
 # Go through all IP's in ips and compare with the ip and mask from the ACL
@@ -54,7 +54,13 @@ def isdir(ip,mask):
 	for i in ips:
 		result = result or ( str(IPNetwork(i).ip) == ip and str(IPNetwork(i).netmask) == mask )
 	return result	
-	
+
+def isinnet(ip,mask):
+	result = False
+	for i in ips:
+		result = result or i in IPNetwork(ip + "/" + mask)
+	return result		
+		
 # Postformat the ACL and print
 # arr[6] - protocol (ip, tcp, udp)
 # arr[7] - source ip
@@ -105,18 +111,20 @@ if args.both and args.transform:
 	quit("--transform requires either --src or --dst. --transform cannot be used with --both")
 
 # IPSet with the IP-addresses to search for
-ips = IPSet()
+#ips = IPSet()
+ips = []
 
 # If a list of IP's is given, add them all
 if "," in args.addr:
 	for i in args.addr.split(","):
-		ips.add(IPNetwork(i))
+#		ips.add(IPNetwork(i))
+		ips.append(IPNetwork(i))
 else:
-	ips.add(IPNetwork(args.addr))	
+		ips.append(IPNetwork(args.addr))	
 	
 arr = []
-temp_set = IPSet()
-temp_set.clear()
+#temp_set = IPSet()
+#temp_set.clear()
 f = open (args.acl,"r")
 
 for line in f:
@@ -148,7 +156,7 @@ for line in f:
 	elif args.both:
 		if issrc() or isdst(): print_acl()
 
-	temp_set.clear()
+#	temp_set.clear()
 	del arr[:]		
 	
 f.close()		
