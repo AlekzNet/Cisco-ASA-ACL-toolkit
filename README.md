@@ -8,7 +8,7 @@ pip install netaddr
 ```
 ## ipaclmatch.py 
 
-ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, subnetworks and supernets.
+ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, the IP_addresses belong to.
 
 Usage:
 
@@ -44,7 +44,7 @@ Save the access group using the following command in a file, for example ACL_nam
 sh access-list ACL-name
 ```
 
-Search only the source addresses for 10.0.1.2/32 and 10.2.3.0/24 and networks these addresses contain or belong to (for example, 10/8, 10.2.3.128/25, 10.2.3.4/32, etc):
+Search only the source addresses for 10.0.1.2/32 and 10.2.3.0/24 and networks these addresses belong to (for example, 10/8, 10.2.3.128/25, 10.2.3.4/32, etc):
 
 ```txt
 python ipaclmatch.py -a 10.0.1.2,10.2.3.0/24 -s ACL_name.acl 
