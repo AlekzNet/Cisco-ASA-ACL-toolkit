@@ -23,8 +23,10 @@ parser.add_argument('--noline', help='Removes line number from the output', acti
 args = parser.parse_args()
 if not args.src and not args.dst and not args.both: args.both = True
 
+# service name - port mapping from 
+# http://www.cisco.com/c/en/us/td/docs/security/asa/asa96/configuration/general/asa-96-general-config/ref-ports.html#ID-2120-000002b8
 if args.transform: 
-	s2n={'domain': '53', 'sunrpc': '111', 'citrix-ica': '1494', 'telnet': '23', 'tftp': '69', 'syslog': '514', 'rtsp': '554', 'secureid-udp': '5510', 'gopher': '70', 'h323': '1720', 'echo': '7', 'netbios-ssn': '139', 'snmptrap': '162', 'rpc': '111', 'radius': '1645', 'pcanywhere-data': '5631', 'nameserver': '42', 'rsh': '514', 'sqlnet': '1521', 'uucp': '540', 'ftp': '21', 'sip': '5060', 'whois': '43', 'smtp': '25', 'ctiqbe': '2748', 'hostname': '101', 'snmp': '161', 'mobile-ip': '434', 'daytime': '13', 'ldaps': '636', 'isakmp': '500', 'netbios-dgm': '138', 'finger': '79', 'https': '443', 'ldap': '389', 'kshell': '544', 'irc': '194', 'nntp': '119', 'biff': '512', 'http': '80', 'cifs': '3020', 'exec': '512', 'pptp': '1723', 'ntp': '123', 'aol': '5190', 'talk': '517', 'pcanywhere-status': '5632', 'pop3': '110', 'pop2': '109', 'ftp-data': '20', 'lotusnote': '1352', 'rip': '520', 'xdmcp': '177', 'pim-auto-rp': '496', 'login': '513', 'dnsix': '195', 'ident': '113', 'netbios-ns': '137', 'kerberos': '750', 'tacacs': '49', 'who': '513', 'cmd': '514', 'bootps': '67', 'bgp': '179', 'nfs': '2049', 'klogin': '543', 'chargen': '19', 'www': '80', 'time': '37', 'discard': '13', 'imap4': '143', 'lpd': '515', 'bootpc': '68', 'radius-acct': '1646', 'ssh': '22'}
+	s2n={'domain': '53', 'sunrpc': '111', 'citrix-ica': '1494', 'telnet': '23', 'tftp': '69', 'syslog': '514', 'rtsp': '554', 'secureid-udp': '5510', 'gopher': '70', 'h323': '1720', 'echo': '7', 'netbios-ssn': '139', 'snmptrap': '162', 'rpc': '111', 'radius': '1645', 'pcanywhere-data': '5631', 'nameserver': '42', 'rsh': '514', 'sqlnet': '1521', 'uucp': '540', 'ftp': '21', 'sip': '5060', 'whois': '43', 'smtp': '25', 'ctiqbe': '2748', 'hostname': '101', 'snmp': '161', 'mobile-ip': '434', 'daytime': '13', 'ldaps': '636', 'isakmp': '500', 'netbios-dgm': '138', 'finger': '79', 'https': '443', 'ldap': '389', 'kshell': '544', 'irc': '194', 'nntp': '119', 'biff': '512', 'http': '80', 'cifs': '3020', 'exec': '512', 'pptp': '1723', 'ntp': '123', 'aol': '5190', 'talk': '517', 'pcanywhere-status': '5632', 'pop3': '110', 'pop2': '109', 'ftp-data': '20', 'lotusnotes': '1352', 'rip': '520', 'xdmcp': '177', 'pim-auto-rp': '496', 'login': '513', 'dnsix': '195', 'ident': '113', 'netbios-ns': '137', 'kerberos': '750', 'tacacs': '49', 'who': '513', 'cmd': '514', 'bootps': '67', 'bgp': '179', 'nfs': '2049', 'klogin': '543', 'chargen': '19', 'www': '80', 'time': '37', 'discard': '13', 'imap4': '143', 'lpd': '515', 'bootpc': '68', 'radius-acct': '1646', 'ssh': '22'}
 	
 
 # True if the IP belongs to the Source IP
@@ -101,13 +103,12 @@ def print_acl():
 				arr[8] = "255.255.255.255"
 			prepsvc()
 			print arr[7],arr[8],arr[11]
-			return
 	elif args.noline:
 		tmp=re.sub(r'\bline\b \d+ ','',tmp)
 		print tmp.replace('0.0.0.0 0.0.0.0','any')
 	else: print tmp.replace('0.0.0.0 0.0.0.0','any')		
 
-# Put the service in arr[11] in the form of tcp-1234, udp-12345-3456, or *
+# Place the service in arr[11] in the form of tcp:1234, udp:12345=3456, or *
 def prepsvc():
 	if len(arr)-1 >= 12: serv2num(12)
 	if len(arr)-1 >= 13: serv2num(13)	
@@ -122,7 +123,7 @@ def prepsvc():
 # Replace service name with port number
 # f is the position in arr	
 def serv2num(f):
-	if re.match(r'\d+',arr[f]): return
+	if re.match(r'\d+',arr[f]): return  # if number nothing to do
 	if arr[f] in s2n: arr[f]=s2n[arr[f]]
 	else: quit(arr[f] + " is not a known service")	
 	
