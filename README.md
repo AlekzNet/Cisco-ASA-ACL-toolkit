@@ -91,7 +91,7 @@ access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 e
 . . .
 ```
 
-Output only the Dest-IP, Dest-Mask, and service (in the form of `tcp:1224`, `tcp:20000=30000`, `udp:+30000`, or `*`) corresponding to SourceIP=10.2.3.0/24 and all networks it belongs to. This more replaces service names with the corresponding  port numbers:
+Output only the Dest-IP, Dest-Mask, and service (in the form of `tcp:1224`, `tcp:20000=30000`, `udp:+30000`, or `*`) corresponding to SourceIP=10.2.3.0/24 and all networks it belongs to. This mode replaces service names with the corresponding  port numbers:
 
 ```txt
 python ipaclmatch.py  -a 10.2.3.0/24 -s -t ACL_name.acl
