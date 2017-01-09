@@ -94,7 +94,7 @@ access-list FW_ACL_lab extended permit tcp 10.2.0.0 255.255.0.0 host 7.2.2.189 e
 Output only the Dest-IP, Dest-Mask, and service (in the form of `tcp:1224`, `tcp:20000=30000`, `udp:+30000`, or `*`) corresponding to SourceIP=10.2.3.0/24 and all networks it belongs to. This mode replaces service names with the corresponding  port numbers:
 
 ```txt
-python ipaclmatch.py  -a 10.2.3.0/24 -s -t ACL_name.acl
+python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl
 10.1.20.68 255.255.255.255 tcp:7102
 10.15.10.130 255.255.255.255 tcp:80
 10.15.10.130 255.255.255.255 tcp:443
@@ -102,4 +102,11 @@ python ipaclmatch.py  -a 10.2.3.0/24 -s -t ACL_name.acl
 10.15.10.130 255.255.255.255 tcp:1024=10000
 10.15.10.130 255.255.255.255 tcp:7102
 
+```
+Mae sure, that no denies prevent you from reordering the rules.
+
+The result can be fed to `sort -u` to get rid of duplicates or to `sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4` (or `sort -u -V` if supported) to sort the output by network numbers:
+
+```sh
+python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl | sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4
 ```
