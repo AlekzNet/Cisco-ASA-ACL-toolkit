@@ -113,11 +113,11 @@ def prepsvc():
 	if len(arr)-1 >= 12: serv2num(12)
 	if len(arr)-1 >= 13: serv2num(13)	
 	if "ip" in arr[6]: arr.insert(11,"*")
-	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'='+arr[13]
+	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-'+arr[13]
 	elif "neq" in arr[11]: arr[11] = arr[6]+'!'+arr[12]
 	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
-	elif "gt" in arr[11]: arr[11] = arr[6]+'>'+arr[12]
-	elif "lt" in arr[11]: arr[11] = arr[6]+'<'+arr[12]
+	elif "gt" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-65535'
+	elif "lt" in arr[11]: arr[11] = arr[6]+':1-'+arr[12]
 	else: arr[11] = arr[6]			
 
 # Replace service name with port number
