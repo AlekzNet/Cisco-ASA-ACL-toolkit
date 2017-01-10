@@ -13,8 +13,8 @@ ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, th
 Usage:
 
 ```txt
-usage: ipaclmatch.py [-h] [-a ADDR] [-s | -d | -b] [--noany]
-                     [--deny | --permit] [--direct] [-t] [--contain]
+usage: ipaclmatch.py [-h] [-a ADDR] [-s | -d | -b] [--noany | --any]
+                     [--deny | --permit] [--direct] [-t] [-p] [--contain]
                      [--noline]
                      acl
 
@@ -23,18 +23,25 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -a ADDR, --addr ADDR  Comma-separated list of addresses/netmasks
+  -a ADDR, --addr ADDR  Comma-separated list of addresses/netmasks. "all"
+                        shows all lines
   -s, --src             Search the source
   -d, --dst             Search the destination
   -b, --both            Search both the source and the destination (default)
   --noany               Ignore 'any' in the ACLs
+  --any                 Show only 'any' in the ACLs
   --deny                Search 'deny' rules only
   --permit              Search 'permit' rules only
   --direct              Direct IP match only
-  -t, --transform       Transform the output
+  -t, --transform       Transform the output. Must be used with either -s or
+                        -d and with either --deny or --permit
+  -p, --policy          Print the policy in the form: SourceIP SourceMask
+                        DestIP DestMask Proto:Port. Must be used with either
+                        --deny or --permit
   --contain             Direct matches and subnets (not direct and uppernets).
                         Assumes --noany
   --noline              Removes line number from the output
+
 ```
 
 Examples:
@@ -109,4 +116,12 @@ The result can be fed to `sort -u` to get rid of duplicates or to `sort -u -n -t
 
 ```sh
 python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl | sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4
+```
+Print the whole "permit" policy in the form:
+SourceIP SourceMask DestIP DestMask Proto:Port
+```txt
+ipaclmatch.py -p --permit test.acl
+13.23.9.1 255.255.255.255 38.3.5.4 255.255.255.254 tcp:1-5052,tcp:5054-65535
+13.4.2.3 255.255.255.255 38.3.5.4 255.255.255.254 tcp:5053
+9.4.2.17 255.255.255.255 38.3.5.4 255.255.255.254 tcp:5053
 ```
