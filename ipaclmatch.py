@@ -6,22 +6,34 @@ import argparse
 import re
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-a','--addr', default='0.0.0.0/0', help="Comma-separated list of addresses/netmasks")
+parser.add_argument('-a','--addr', default='0.0.0.0/0', help="Comma-separated list of addresses/netmasks. \"all\" shows all lines")
 parser.add_argument('acl', help="Cisco ASA ACL filename")
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s', '--src', help="Search the source", action="store_true")
 sd.add_argument('-d', '--dst', help="Search the destination", action="store_true")
 sd.add_argument('-b', '--both', help="Search both the source and the destination (default)", action="store_true")
-parser.add_argument('--noany', help="Ignore \'any\' in the ACLs", action="store_true")
+an = parser.add_mutually_exclusive_group()
+an.add_argument('--noany', help="Ignore \'any\' in the ACLs", action="store_true")
+an.add_argument('--any', help="Show only \'any\' in the ACLs", action="store_true")
 dp = parser.add_mutually_exclusive_group()
 dp.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true")
 dp.add_argument('--permit', help="Search \'permit\' rules only" , action="store_true")
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 parser.add_argument('-t','--transform', help='Transform the output', action="store_true")
+parser.add_argument('-p','--policy', help='Print the policy in the form: SourceIP SourceMask DestIP DestMask Proto:Port', action="store_true")
 parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
 parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
 args = parser.parse_args()
 if not args.src and not args.dst and not args.both: args.both = True
+if "all" in args.addr: args.addr="0.0.0.0/0"
+if "0.0.0.0/0" in args.addr and not args.any: args.contain=True
+if args.both and args.transform:
+	quit("--transform requires either --src or --dst. --transform cannot be used with --both")
+if args.policy: args.transform=True
+if args.both and args.direct:
+	quit("--direct requires either --src or --dst. --both cannot be used with --direct")
+
+
 
 # service name - port mapping from 
 # http://www.cisco.com/c/en/us/td/docs/security/asa/asa96/configuration/general/asa-96-general-config/ref-ports.html#ID-2120-000002b8
@@ -91,16 +103,17 @@ def print_acl():
 	tmp = line
 	if args.transform:
 		if "icmp" in arr[6]: return
-		if args.src:
-			if "host" in arr[9]: 
-				arr[9] = arr[10]
-				arr[10] = "255.255.255.255"
+		if args.policy:
+			host2num("src")
+			host2num("dst")
+			prepsvc()
+			print arr[7],arr[8],arr[9],arr[10],arr[11]
+		elif args.src:
+			host2num("src")
 			prepsvc()
 			print arr[9],arr[10],arr[11]
 		elif args.dst:
-			if "host" in arr[7]: 
-				arr[7] = arr[8]
-				arr[8] = "255.255.255.255"
+			host2num("dst")
 			prepsvc()
 			print arr[7],arr[8],arr[11]
 	elif args.noline:
@@ -108,13 +121,23 @@ def print_acl():
 		print tmp.replace('0.0.0.0 0.0.0.0','any')
 	else: print tmp.replace('0.0.0.0 0.0.0.0','any')		
 
+def host2num(where):
+	if "src" in where:
+		if "host" in arr[9]: 
+			arr[9] = arr[10]
+			arr[10] = "255.255.255.255"
+	if "dst" in where:
+		if "host" in arr[7]: 
+			arr[7] = arr[8]
+			arr[8] = "255.255.255.255"
+	
 # Place the service in arr[11] in the form of tcp:1234, udp:12345=3456, or *
 def prepsvc():
 	if len(arr)-1 >= 12: serv2num(12)
 	if len(arr)-1 >= 13: serv2num(13)	
 	if "ip" in arr[6]: arr.insert(11,"*")
 	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-'+arr[13]
-	elif "neq" in arr[11]: arr[11] = arr[6]+'!'+arr[12]
+	elif "neq" in arr[11]: arr[11] = arr[6]+':1-'+str(int(arr[12])-1)+','+arr[6]+':'+str(int(arr[12])+1)+'-65535'
 	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
 	elif "gt" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-65535'
 	elif "lt" in arr[11]: arr[11] = arr[6]+':1-'+arr[12]
@@ -127,10 +150,6 @@ def serv2num(f):
 	if arr[f] in s2n: arr[f]=s2n[arr[f]]
 	else: quit(arr[f] + " is not a known service")	
 	
-if args.both and args.direct:
-	quit("--direct requires either --src or --dst. --both cannot be used with --direct")
-if args.both and args.transform:
-	quit("--transform requires either --src or --dst. --transform cannot be used with --both")
 
 
 ips = []
@@ -164,8 +183,12 @@ for line in f:
 
 	# We are not interested in deny lines, if --permit is set
 	if args.permit and "deny" in arr[5]: continue
+	
+	if args.both and args.noany and "0.0.0.0 0.0.0.0" in line: continue
 
-	if args.src:
+	if "0.0.0.0/0" in args.addr and not args.any and not args.noany:
+		print_acl()
+	elif args.src:
 		if issrc(): print_acl()
 	
 	elif args.dst:	
