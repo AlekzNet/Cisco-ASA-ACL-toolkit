@@ -19,8 +19,8 @@ dp = parser.add_mutually_exclusive_group()
 dp.add_argument('--deny', help="Search \'deny\' rules only" , action="store_true")
 dp.add_argument('--permit', help="Search \'permit\' rules only" , action="store_true")
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
-parser.add_argument('-t','--transform', help='Transform the output', action="store_true")
-parser.add_argument('-p','--policy', help='Print the policy in the form: SourceIP SourceMask DestIP DestMask Proto:Port', action="store_true")
+parser.add_argument('-t','--transform', help='Transform the output. Must be used with either -s or -d and with either --deny or --permit', action="store_true")
+parser.add_argument('-p','--policy', help='Print the policy in the form:\n SourceIP SourceMask DestIP DestMask Proto:Port. Must be used with either --deny or --permit', action="store_true")
 parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
 parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
 args = parser.parse_args()
@@ -32,7 +32,8 @@ if args.both and args.transform:
 if args.policy: args.transform=True
 if args.both and args.direct:
 	quit("--direct requires either --src or --dst. --both cannot be used with --direct")
-
+if args.transform and not args.deny and not args.permit:
+	quit("--transform or --policy must be used with either --deny or --permit")
 
 
 # service name - port mapping from 
