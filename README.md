@@ -110,7 +110,7 @@ python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl
 10.15.10.130 255.255.255.255 tcp:7102
 
 ```
-Mae sure, that no denies prevent you from reordering the rules.
+Make sure, that no denies prevent you from reordering the rules.
 
 The result can be fed to `sort -u` to get rid of duplicates or to `sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4` (or `sort -u -V` if supported) to sort the output by network numbers:
 
