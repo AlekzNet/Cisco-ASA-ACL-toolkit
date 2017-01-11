@@ -4,10 +4,11 @@ from netaddr import *
 import string
 import argparse
 import re
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-a','--addr', default='0.0.0.0/0', help="Comma-separated list of addresses/netmasks. \"all\" shows all lines")
-parser.add_argument('acl', help="Cisco ASA ACL filename")
+parser.add_argument('acl', default="-", nargs='?', help="Cisco ASA ACL filename or \"-\" to read from the console (default)")
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s', '--src', help="Search the source", action="store_true")
 sd.add_argument('-d', '--dst', help="Search the destination", action="store_true")
@@ -24,6 +25,7 @@ parser.add_argument('-p','--policy', help='Print the policy in the form:\n Sourc
 parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
 parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
 args = parser.parse_args()
+
 if not args.src and not args.dst and not args.both: args.both = True
 if "all" in args.addr: args.addr="0.0.0.0/0"
 if "0.0.0.0/0" in args.addr and not args.any: args.contain=True
@@ -162,8 +164,10 @@ if "," in args.addr:
 		ips.append(IPNetwork(i))
 else:
 		ips.append(IPNetwork(args.addr))	
-	
-f = open (args.acl,"r")
+
+#if "-" == args.acl:  f=sys.stdin
+#else: f = open (args.acl,"r")
+f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 
 for line in f:
 
