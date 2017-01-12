@@ -152,17 +152,17 @@ udp:1234-3456
 
 ```txt
 genacl.py -h
-usage: genacl.py [-h] [-s SRC | -d DST] [--deny] [pol] [acl]
+usage: genacl.py [-h] [-s SRC | -d DST] [--deny] [--acl [ACL]] [pol]
 
 positional arguments:
   pol                Firewall policy or "-" to read from the console
-  acl                ACL name, default=Test_ACL
 
 optional arguments:
   -h, --help         show this help message and exit
   -s SRC, --src SRC  Source IP-address/netmask or object name
   -d DST, --dst DST  Destination IP-address/netmasks or object name
   --deny             Use deny by default instead of permit
+  --acl [ACL]        ACL name, default=Test_ACL
 ```
 
 
@@ -228,4 +228,19 @@ access-list new_acl extended permit ip object-group MyHosts 10.3.9.4 255.255.255
 access-list new_acl extended permit udp object-group MyHosts 10.3.10.0 255.255.255.0 gt 30000
 ```
 
+or network 123.123.123.128/25 as the destination:
 
+```txt
+genacl.py -d 123.123.123.128/25  --acl new_acl test-pol2.acl
+access-list new_acl extended permit tcp host 10.3.0.2 123.123.123.128 255.255.255.128 eq 123
+access-list new_acl extended permit tcp host 10.3.0.1 123.123.123.128 255.255.255.128 eq 123
+access-list new_acl extended permit tcp 10.3.8.4 255.255.255.254 123.123.123.128 255.255.255.128 eq 123
+access-list new_acl extended permit tcp host 10.3.0.2 123.123.123.128 255.255.255.128 eq 53
+access-list new_acl extended permit tcp host 10.3.0.1 123.123.123.128 255.255.255.128 eq 53
+access-list new_acl extended permit tcp 10.3.8.4 255.255.255.254 123.123.123.128 255.255.255.128 eq 53
+access-list new_acl extended permit udp host 10.3.0.2 123.123.123.128 255.255.255.128 eq 53
+access-list new_acl extended permit udp host 10.3.0.1 123.123.123.128 255.255.255.128 eq 53
+access-list new_acl extended permit udp 10.3.8.4 255.255.255.254 123.123.123.128 255.255.255.128 range 20000 30000
+access-list new_acl extended permit ip 10.3.9.4 255.255.255.254 123.123.123.128 255.255.255.128 
+access-list new_acl extended permit udp 10.3.10.0 255.255.255.0 123.123.123.128 255.255.255.128 gt 30000
+```
