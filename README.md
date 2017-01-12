@@ -10,7 +10,7 @@ pip install netaddr
 
 ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, the IP_addresses belong to.
 
-Usage:
+### Usage:
 
 ```txt
 usage: ipaclmatch.py [-h] [-a ADDR] [-s | -d | -b] [--noany | --any]
@@ -44,7 +44,7 @@ optional arguments:
 
 ```
 
-=== Examples
+### Examples
 
 Save the access group using the following command in a file, for example ACL_name.acl:
 
@@ -148,7 +148,7 @@ icmp
 udp:1234-3456
 ```
 
-=== Usage:
+### Usage:
 
 ```txt
 genacl.py -h
@@ -166,4 +166,32 @@ optional arguments:
 ```
 
 
-=== Examples
+### Examples
+
+Considering the following proto-policy:
+
+```txt
+10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 tcp:123
+13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 udp:53
+13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 udp:53 deny
+13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 udp:53
+10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 udp:20000-30000
+10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 *
+0.0.0.0 0.0.0.0 10.3.10.0 255.255.255.0 udp:30000-65535
+0.0.0.0 0.0.0.0 0.0.0.0 0.0.0.0 * deny
+```
+
+default settings will produce the following output:
+
+```txt
+cat test-pol.acl | genacl.py
+access-list Test_ACL extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123
+access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53
+access-list Test_ACL extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53
+access-list Test_ACL extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000
+access-list Test_ACL extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 
+access-list Test_ACL extended permit udp 0.0.0.0 0.0.0.0 10.3.10.0 255.255.255.0 gt 30000
+access-list Test_ACL extended deny ip 0.0.0.0 0.0.0.0 0.0.0.0 0.0.0.0 
+```
+
+
