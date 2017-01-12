@@ -52,7 +52,7 @@ sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or object name")
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
 parser.add_argument('--deny', help="Use deny by default instead of permit", action="store_true")
-parser.add_argument('acl', default="Test_ACL", nargs='?', help="ACL name, default=Test_ACL")
+parser.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name, default=Test_ACL")
 args = parser.parse_args()
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
@@ -64,7 +64,6 @@ elif args.dst:
 else: 
 	address = "any"
 address = addr_form(address)
-print address
 
 for line in f:
 	line.strip()
@@ -84,10 +83,10 @@ for line in f:
 # arr[4] - service	
 # arr[5] - action 
 		print "access-list",args.acl,"extended", "permit" if not args.deny else "deny", \
-		proto(arr[4]),arr[0],arr[1],arr[2],arr[3],port(arr[4])
+		proto(arr[4]),addr_form(arr[0]+" "+arr[1]),addr_form(arr[2]+" "+arr[3]),port(arr[4])
 	elif len(arr) > 5:
 		print "access-list",args.acl,"extended", arr[5], \
-		proto(arr[4]),arr[0],arr[1],arr[2],arr[3],port(arr[4])			
+		proto(arr[4]),addr_form(arr[0]+" "+arr[1]),addr_form(arr[2]+" "+arr[3]),port(arr[4])			
 	else:	
 		if args.src:		
 # arr[0] - destIP
