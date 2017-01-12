@@ -185,13 +185,14 @@ default settings will produce the following output:
 
 ```txt
 cat test-pol.acl | genacl.py
-access-list Test_ACL extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123
-access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53
-access-list Test_ACL extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53
+access-list Test_ACL extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.2 eq 123
+access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 host 10.3.0.2 eq 53
+access-list Test_ACL extended deny udp 13.20.0.0 255.255.0.0 host 10.3.0.1 eq 53
+access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 53
 access-list Test_ACL extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000
 access-list Test_ACL extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 
-access-list Test_ACL extended permit udp 0.0.0.0 0.0.0.0 10.3.10.0 255.255.255.0 gt 30000
-access-list Test_ACL extended deny ip 0.0.0.0 0.0.0.0 0.0.0.0 0.0.0.0 
+access-list Test_ACL extended permit udp any 10.3.10.0 255.255.255.0 gt 30000
+access-list Test_ACL extended deny ip any any 
 ```
 
 
