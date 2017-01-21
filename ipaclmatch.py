@@ -1,11 +1,16 @@
 #!/usr/bin/python
 
-from netaddr import *
+
 import string
 import argparse
 import re
 import sys
-
+try:
+	from netaddr import *
+except ImportError:
+	print >>sys.stderr, 'ERROR: netaddr module not found.'
+	sys.exit(1)
+	
 parser = argparse.ArgumentParser()
 parser.add_argument('-a','--addr', default='0.0.0.0/0', help="Comma-separated list of addresses/netmasks. \"all\" shows all lines")
 parser.add_argument('acl', default="-", nargs='?', help="Cisco ASA ACL filename or \"-\" to read from the console (default)")
@@ -103,7 +108,7 @@ def isnetin(ip,mask):
 # arr[12]- port or port1
 # arr[13]- port2 or nothing
 def print_acl():
-	tmp = line
+	global line
 	if args.transform:
 		if "icmp" in arr[6]: return
 		if args.policy:
@@ -120,9 +125,9 @@ def print_acl():
 			prepsvc()
 			print arr[7],arr[8],arr[11]
 	elif args.noline:
-		tmp=re.sub(r'\bline\b \d+ ','',tmp)
-		print tmp.replace('0.0.0.0 0.0.0.0','any')
-	else: print tmp.replace('0.0.0.0 0.0.0.0','any')		
+		line=re.sub(r'\bline\b \d+ ','',line)
+		print line.replace('0.0.0.0 0.0.0.0','any')
+	else: print line.replace('0.0.0.0 0.0.0.0','any')		
 
 def host2num(where):
 	if "src" in where:
@@ -165,8 +170,6 @@ if "," in args.addr:
 else:
 		ips.append(IPNetwork(args.addr))	
 
-#if "-" == args.acl:  f=sys.stdin
-#else: f = open (args.acl,"r")
 f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 
 for line in f:

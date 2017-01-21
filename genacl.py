@@ -4,7 +4,12 @@ import string
 import argparse
 import re
 import sys
-from netaddr import *
+
+try:
+	from netaddr import *
+except ImportError:
+	print >>sys.stderr, 'ERROR: netaddr module not found.'
+	sys.exit(1)
 
 def proto(service):
 	if "*" in service: 
