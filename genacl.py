@@ -12,12 +12,12 @@ except ImportError:
 	sys.exit(1)
 
 def proto(service):
-	if "*" in service: 
+	if "*" in service:
 		return "ip"
-	elif ":" in service: 
+	elif ":" in service:
 		tmp = service.split(":")
 		return tmp[0]
-	else: 
+	else:
 		return service
 
 def port(service):
@@ -25,15 +25,15 @@ def port(service):
 		tmp = service.split(":")
 		if "-" in tmp[1]:
 			low,high = tmp[1].split("-")
-			if int(low) == 1: 
+			if int(low) == 1:
 				return "lt " +high
-			elif int(high) == 65535: 
+			elif int(high) == 65535:
 				return "gt " +low
-			else: 
-				return "range "+low+" "+high						
-		else: 
+			else:
+				return "range "+low+" "+high
+		else:
 			return "eq "+tmp[1]
-	else: 
+	else:
 		return ''
 
 def addr_form(addr):
@@ -62,49 +62,50 @@ args = parser.parse_args()
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
-if args.src: 
+if args.src:
 	address = args.src
-elif args.dst: 
+elif args.dst:
 	address = args.dst
-else: 
+else:
 	address = "any"
 address = addr_form(address)
 
 for line in f:
 	line.strip()
 	# Replace any with 0/0
-	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)	
+	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
 	arr=line.split()
 	if len(arr) <= 3 and not (args.src or args.dst):
-		quit("Not enough fields. Specify either the source or destination IP-address/netmask or object name")
+		print >>sys.stderr, line
+		print >>sys.stderr, "Not enough fields. Specify either the source or destination IP-address/netmask or object name"
+		sys.exit(1)
 	elif len(arr) <= 2:
-		quit("Too little fields in the policy. There must be 3 or more")		
-	
-	if len(arr) == 5:	
+		print >>sys.stderr, line
+		print >>sys.stderr, "Too little fields in the policy. There must be 3 or more"
+		sys.exit(1)
+
+	if len(arr) == 5:
 # arr[0] - sourceIP
 # arr[1] - source mask
 # arr[2] - destIP
 # arr[3] - dest mask
-# arr[4] - service	
-# arr[5] - action 
+# arr[4] - service
+# arr[5] - action
 		print "access-list",args.acl,"extended", "permit" if not args.deny else "deny", \
 		proto(arr[4]),addr_form(arr[0]+" "+arr[1]),addr_form(arr[2]+" "+arr[3]),port(arr[4])
 	elif len(arr) > 5:
 		print "access-list",args.acl,"extended", arr[5], \
-		proto(arr[4]),addr_form(arr[0]+" "+arr[1]),addr_form(arr[2]+" "+arr[3]),port(arr[4])			
-	else:	
-		if args.src:		
+		proto(arr[4]),addr_form(arr[0]+" "+arr[1]),addr_form(arr[2]+" "+arr[3]),port(arr[4])
+	else:
+		if args.src:
 # arr[0] - destIP
-# arr[1] - dest mask		
+# arr[1] - dest mask
 # arr[2] - service
 			print "access-list",args.acl,"extended", "permit" if not args.deny else "deny", \
 			proto(arr[2]),address,addr_form(arr[0]+" "+arr[1]),port(arr[2])
 		elif args.dst:
 # arr[0] - sourceIP
-# arr[1] - source mask		
+# arr[1] - source mask
 # arr[2] - service
 			print "access-list",args.acl,"extended", "permit" if not args.deny else "deny", \
 			proto(arr[2]),addr_form(arr[0]+" "+arr[1]),address,port(arr[2])
-			
-
-			
