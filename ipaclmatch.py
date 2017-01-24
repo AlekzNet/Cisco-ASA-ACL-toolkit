@@ -43,9 +43,7 @@ if args.policy: args.transform=True
 if args.both and args.direct:
 	print >>sys.stderr, "--direct requires either --src or --dst. --both cannot be used with --direct"
 	sys.exit(1)
-if args.transform and not args.deny and not args.permit:
-	print >>sys.stderr, "--transform or --policy must be used with either --deny or --permit"
-	sys.exit(1)
+
 if args.norange: args.range=False
 
 
@@ -122,15 +120,15 @@ def print_acl():
 			host2num("src")
 			host2num("dst")
 			prepsvc()
-			print arr[7],arr[8],arr[9],arr[10],arr[11]
+			print arr[7],arr[8],arr[9],arr[10],arr[11], action
 		elif args.src:
 			host2num("src")
 			prepsvc()
-			print arr[9],arr[10],arr[11]
+			print arr[9],arr[10],arr[11], action
 		elif args.dst:
 			host2num("dst")
 			prepsvc()
-			print arr[7],arr[8],arr[11]
+			print arr[7],arr[8],arr[11], action
 	elif args.noline:
 		line=re.sub(r'\bline\b \d+ ','',line)
 		print line.replace('0.0.0.0 0.0.0.0','any')
@@ -215,6 +213,12 @@ for line in f:
 
 	# We are not interested in deny lines, if --permit is set
 	if args.permit and "deny" in arr[5]: continue
+
+	# Explicitly add 'deny' at the end of the policy line
+	if not args.permit and not args.deny and "deny" in arr[5]:
+		action = 'deny'
+	else:
+		action = ''
 
 	if args.both and args.noany and "0.0.0.0 0.0.0.0" in line: continue
 
