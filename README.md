@@ -20,12 +20,13 @@ ipaclmatch.py finds ACLs matching the given IP-addresses, including networks, th
 
 ```txt
 usage: ipaclmatch.py [-h] [-a ADDR] [-s | -d | -b] [--noany | --any]
-                     [--deny | --permit] [--direct] [-t] [-p] [--contain]
-                     [--noline]
-                     acl
+                     [--deny | --permit] [--range | --norange] [--direct] [-t]
+                     [-p] [--contain] [--noline]
+                     [acl]
 
 positional arguments:
-  acl                   Cisco ASA ACL filename
+  acl                   Cisco ASA ACL filename or "-" to read from the console
+                        (default)
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -38,6 +39,8 @@ optional arguments:
   --any                 Show only 'any' in the ACLs
   --deny                Search 'deny' rules only
   --permit              Search 'permit' rules only
+  --range               Replace lt, gt, and neq with ranges (default)
+  --norange             Replace lt, gt, and neq with \<, \>, and ! symbols
   --direct              Direct IP match only
   -t, --transform       Transform the output. Must be used with either -s or
                         -d and with either --deny or --permit
