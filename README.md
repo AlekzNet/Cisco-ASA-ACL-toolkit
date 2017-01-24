@@ -121,10 +121,10 @@ python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl
 ```
 Make sure, that no denies prevent you from reordering the rules.
 
-The result can be fed to `sort -u` to get rid of duplicates or to `sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4` (or `sort -u -V` if supported) to sort the output by network numbers:
+The result can be fed to `sort -u` to get rid of duplicates or to `sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4 | sort -u` (or `sort -u -V` if supported) to sort the output by network numbers:
 
 ```sh
-python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl | sort -u -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4
+python ipaclmatch.py  -a 10.2.3.0/24 -s -t --permit ACL_name.acl | sort -n -t . -k 1,1 -k 2,2 -k 3,3 -k 4,4 | sort -u
 ```
 Print the whole "permit" policy in the form:
 SourceIP SourceMask DestIP DestMask Proto:Port
