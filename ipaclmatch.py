@@ -109,9 +109,11 @@ def isnetin(ip,mask):
 # arr[8] - source mask
 # arr[9] - dest ip
 # arr[10]- dest mask
-# arr[11]- range, eq, lt, gt
+# arr[11]- range, eq, lt, gt - prepsvc changes it to proto:port
 # arr[12]- port or port1
 # arr[13]- port2 or nothing
+# action is either empty or 'deny'
+# neq_range contains the second range, if 'neq'
 def print_acl():
 	global line
 	if args.transform:
@@ -119,16 +121,19 @@ def print_acl():
 		if args.policy:
 			host2num("src")
 			host2num("dst")
-			prepsvc()
-			print arr[7],arr[8],arr[9],arr[10],arr[11], action
+			neq_range = prepsvc()
+			print arr[7],arr[8],arr[9],arr[10],arr[11],action
+			if neq_range: print arr[7],arr[8],arr[9],arr[10],neq_range,action
 		elif args.src:
 			host2num("src")
-			prepsvc()
+			neq_range = prepsvc()
 			print arr[9],arr[10],arr[11], action
+			if neq_range: print arr[9],arr[10],neq_range,action
 		elif args.dst:
 			host2num("dst")
-			prepsvc()
-			print arr[7],arr[8],arr[11], action
+			neq_range = prepsvc()
+			print arr[7],arr[8],arr[11],action
+			if neq_range: print arr[7],arr[8],neq_range,action
 	elif args.noline:
 		line=re.sub(r'\bline\b \d+ ','',line)
 		print line.replace('0.0.0.0 0.0.0.0','any')
@@ -155,8 +160,8 @@ def prepsvc():
 	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-'+arr[13]
 	elif "neq" in arr[11]:
 		if args.range:
-			arr[11] = arr[6]+':1-'+str(int(arr[12])-1)+','+arr[6]+':'+str(int(arr[12])+1)+'-65535'
-			return True
+			arr[11] = arr[6]+':1-'+str(int(arr[12])-1)
+			return arr[6]+':'+str(int(arr[12])+1)+'-65535'
 		else:
 			arr[11] = arr[6]+'!'+arr[12]
 	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
