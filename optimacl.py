@@ -31,6 +31,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console")
 args = parser.parse_args()
 
+services={}
 policy={}
 star_nets=IPSet()
 
@@ -54,9 +55,22 @@ for line in f:
 				policy[network] = []
 			policy[network].append(service)
 
+# From policy to services
+# policy is a dict of IPNetwork: [ port_list]
+for net in policy:
+	if not net in star_nets:
+		for srv in policy[net]:
+			if srv in services.keys():
+				services[srv].add(net)
+			else:
+				services[srv] = IPSet(net)
 
-for i in policy:
-	if not i in star_nets:
-		print i.ip, i.netmask, policy[i]
+
+for i in services:
+	for j in cidr_merge(services[i]):
+#	print i, services[i]
+		print j.ip, j.netmask, i
+
+
 for i in cidr_merge(star_nets):
 	print i.ip, i.netmask, "*"
