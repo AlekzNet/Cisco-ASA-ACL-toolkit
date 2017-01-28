@@ -64,7 +64,7 @@ $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group | wc -l
 Search test.acl for the destination networks that contain 10.3.8.4, and generate new_acl with 10.3.8.4 as the destination:
 
 ```txt
-ipaclmatch.py -t -d -a 10.3.8.4 --permit test.acl |  optimacl.py | genacl.py -d 10.3.8.4  --acl new_acl
+$ ipaclmatch.py -t -d -a 10.3.8.4 --permit test.acl |  optimacl.py | genacl.py -d 10.3.8.4  --acl new_acl
 access-list new_acl extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.8.4 eq 53
 access-list new_acl extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.8.4 eq 53
 access-list new_acl extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.8.4 eq 123
