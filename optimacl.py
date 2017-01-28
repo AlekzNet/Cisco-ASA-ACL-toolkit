@@ -167,7 +167,7 @@ if args.group:
 		# 2. Iterate through the list and convert the nets into strings
 		# with IP-address/netmask
 		# 3. Join them together using "," as a separator
-		# The commented out line can be used insted to generate the CIDR notation
+		# The commented out line can be used instead to generate the CIDR /xx notation
 #		networks=",".join(map(lambda x: str(x),cidr_merge(services[service])))
 		networks=",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),cidr_merge(services[service])))
 		if service not in policy.get(networks,''):
@@ -180,10 +180,10 @@ if args.group:
 	# Printing the result
 	for net in policy:
 		print net,",".join(policy[net])
-	print_star()
+	print ",".join(map(lambda x: str(x),star_nets)),"*"
 
 else:
-	# CIDR-merging IPSets, corresponding to the service
+	# CIDR-merging IPNetworks, corresponding to the service
 	# And print the result
 	for srv in services:
 		for net in cidr_merge(services[srv]):
