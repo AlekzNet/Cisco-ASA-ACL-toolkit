@@ -50,6 +50,7 @@ For all permitted source addresses in test.acl create an optimized policy, group
 
 ```txt
 ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group
+
 10.3.10.0/255.255.255.0 udp:30000-65535
 10.7.8.0/255.255.255.0 tcp:1200-1351
 10.8.9.4/255.255.255.254 tcp:22-23
