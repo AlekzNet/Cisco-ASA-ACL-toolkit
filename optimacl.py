@@ -67,19 +67,25 @@ def squeeze(arr):
 # Print "star" networks
 # the CIDR merging is very slow
 def print_star():
-	for i in cidr_merge(star_nets):
+	for i in star_nets:
 		print i.ip, i.netmask, "*"
 
+# Is net a part of any networks in the netlist?
+def isnetin(net,netlist):
+	for inet in netlist:
+		if net in inet: return True
+	return False
+
 parser = argparse.ArgumentParser()
-parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console")
+parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
 parser.add_argument('--group', help='Group services and networks together', action="store_true")
 args = parser.parse_args()
 
 services={}
 policy={}
-star_nets=IPSet()
+star_nets=[]
 
-f=sys.stdin if "-" == args.pol else open (args.pol,"r")
+f=sys.stdin if "-" == args.pol else open(args.pol,"r")
 
 # First iteration is to create a list of services per network
 # If all ports (*) are allowed for a network, then place
@@ -94,19 +100,22 @@ for line in f:
 # an issue
 		if not len(policy.get(network,'')) == 0:
 			del policy[network]
-		star_nets.add(network)
+		star_nets.append(network)
 	else:
 		if service not in policy.get(network,''):
 			if len(policy.get(network,'')) == 0:
 				policy[network] = []
 			policy[network].append(service)
 
-# Seconf iteration
-# Combine services together and remove overlaps
 
+star_nets = cidr_merge(star_nets)
+
+# Second iteration
+# Combine services together and remove overlaps
+# Iterating over policy.keys(), because some entries will be removed from policy
 for net in policy.keys():
 #	print "policy:", net, policy[net]
-	if net in star_nets:
+	if isnetin(net,star_nets):
 #		print "Policy is in star_nets"
 		del policy[net]
 	else:
@@ -140,13 +149,14 @@ for net in policy.keys():
 # Third iteration is to create an IPSet of networks per allowed service
 # From policy to services
 # policy is a dict of IPNetwork: [ port_list]
-# services is a dict of Service: IPSet
+# services is a dict of Service: list(IPNetworks)
 for net in policy:
 	for srv in policy[net]:
 		if srv in services.keys():
-			services[srv].add(net)
+			services[srv].append(net)
 		else:
-			services[srv] = IPSet(net)
+			services[srv] = list(net)
+
 
 if args.group:
 	# Let's reuse policy dict
@@ -178,4 +188,6 @@ else:
 	for srv in services:
 		for net in cidr_merge(services[srv]):
 			print net.ip, net.netmask, srv
+
+
 	print_star()
