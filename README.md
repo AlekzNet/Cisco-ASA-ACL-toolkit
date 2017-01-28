@@ -59,3 +59,11 @@ $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group | wc -l
 
 ```
 118 -> 13 = 85% rule reduction (in this particular example)
+
+
+Search test.acl for the destination networks that contain 10.3.8.4, and generate new_acl with 10.3.8.4 as the destination:
+
+```txt
+ipaclmatch.py -t -d -a 10.3.8.4 --permit test.acl |  optimacl.py | genacl.py -d 10.3.8.4  --acl new_acl
+
+```
