@@ -64,8 +64,15 @@ def squeeze(arr):
 		ranges.append((group[0], group[-1]))
 	return ranges
 
+# Print "star" networks
+# the CIDR merging is very slow
+def print_star():
+	for i in cidr_merge(star_nets):
+		print i.ip, i.netmask, "*"
+
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console")
+parser.add_argument('--group', help='Group services and networks together', action="store_true")
 args = parser.parse_args()
 
 services={}
@@ -141,12 +148,34 @@ for net in policy:
 		else:
 			services[srv] = IPSet(net)
 
+if args.group:
+	# Let's reuse policy dict
+	policy = {}
+	for service in services:
+		# services[service] contains an IPSet
+		# 1. CIDR merge the IPSet into a list of IPNetworks
+		# 2. Iterate through the list and convert the nets into strings
+		# with IP-address/netmask
+		# 3. Join them together using "," as a separator
+		# The commented out line can be used insted to generate the CIDR notation
+#		networks=",".join(map(lambda x: str(x),cidr_merge(services[service])))
+		networks=",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),cidr_merge(services[service])))
+		if service not in policy.get(networks,''):
+			if len(policy.get(networks,'')) == 0:
+				policy[networks] = []
+			policy[networks].append(service)
 
-for i in services:
-	for j in cidr_merge(services[i]):
-#	print i, services[i]
-		print j.ip, j.netmask, i
+	services = {}
 
-#This is very slow
-for i in cidr_merge(star_nets):
-	print i.ip, i.netmask, "*"
+	# Printing the result
+	for net in policy:
+		print net,",".join(policy[net])
+	print_star()
+
+else:
+	# CIDR-merging IPSets, corresponding to the service
+	# And print the result
+	for srv in services:
+		for net in cidr_merge(services[srv]):
+			print net.ip, net.netmask, srv
+	print_star()
