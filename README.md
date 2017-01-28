@@ -14,7 +14,9 @@ Install netaddr:
 ```sh
 pip install netaddr
 ```
+### Issues
 
+* CIDR merging is VERY slow
 
 ### Example
 
