@@ -65,5 +65,11 @@ Search test.acl for the destination networks that contain 10.3.8.4, and generate
 
 ```txt
 ipaclmatch.py -t -d -a 10.3.8.4 --permit test.acl |  optimacl.py | genacl.py -d 10.3.8.4  --acl new_acl
+access-list new_acl extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.8.4 eq 53
+access-list new_acl extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.8.4 eq 53
+access-list new_acl extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.8.4 eq 123
+access-list new_acl extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.8.4 eq 123
+access-list new_acl extended permit udp 13.20.0.0 255.255.0.0 host 10.3.8.4 eq 53
+access-list new_acl extended permit ip 10.0.0.0 255.0.0.0 host 10.3.8.4 
 
 ```
