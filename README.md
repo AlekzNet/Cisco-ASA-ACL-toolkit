@@ -16,3 +16,46 @@ pip install netaddr
 ```
 
 
+### Example
+
+For all permitted source addresses in test.acl create an optimized policy
+
+```txt
+wc -l test.acl
+     118 test.acl
+
+ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s "myObject" --acl new_acl
+
+access-list new_acl extended permit udp object-group myObject 10.3.10.0 255.255.255.0 gt 30000
+access-list new_acl extended permit tcp object-group myObject 10.7.8.0 255.255.255.0 range 1200 1351
+access-list new_acl extended permit udp object-group myObject host 10.3.0.1 eq 53
+access-list new_acl extended permit udp object-group myObject host 10.3.0.2 eq 53
+access-list new_acl extended permit tcp object-group myObject host 10.3.0.1 eq 53
+access-list new_acl extended permit tcp object-group myObject host 10.3.0.2 eq 53
+access-list new_acl extended permit tcp object-group myObject host 10.3.0.1 eq 123
+access-list new_acl extended permit tcp object-group myObject host 10.3.0.2 eq 123
+access-list new_acl extended permit tcp object-group myObject 10.8.9.4 255.255.255.254 range 22 23
+access-list new_acl extended permit tcp object-group myObject 10.3.9.0 255.255.255.252 eq 23
+access-list new_acl extended permit ip object-group myObject 10.3.8.4 255.255.255.254 
+access-list new_acl extended permit ip object-group myObject 10.3.9.4 255.255.255.254 
+access-list new_acl extended permit ip object-group myObject 10.4.0.0 255.254.0.0 
+
+ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s "myObject" --acl new_acl | wc -l
+      13
+
+ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group      
+
+10.3.10.0/255.255.255.0 udp:30000-65535
+10.7.8.0/255.255.255.0 tcp:1200-1351
+10.8.9.4/255.255.255.254 tcp:22-23
+10.3.0.1/255.255.255.255,10.3.0.2/255.255.255.255 udp:53,tcp:53,tcp:123
+10.3.9.0/255.255.255.252 tcp:23
+10.3.8.4 255.255.255.254 *
+10.3.9.4 255.255.255.254 *
+10.4.0.0 255.254.0.0 *
+
+ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group | wc -l
+       8
+
+
+```
