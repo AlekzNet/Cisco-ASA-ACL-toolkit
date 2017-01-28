@@ -58,4 +58,4 @@ $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group | wc -l
        8
 
 ```
-85% rule reduction
+118 -> 13 = 85% rule reduction (in this particular example)
