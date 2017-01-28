@@ -1,5 +1,14 @@
 ## optimacl.py
-Optimizes proto-policy created by ipaclmatch.py. 
+Optimizes proto-policy created by ipaclmatch.py. As input it takes lines with three fields:
+
+IP-address Netmask Protocol:Port
+
+```txt
+10.232.0.0 255.248.0.0 tcp:1-122 
+10.232.0.0 255.248.0.0 tcp:124-65535 
+10.192.0.0 255.248.0.0 udp:20000-30000 
+10.0.0.0 255.0.0.0 * 
+```
 
 ### Usage:
 
