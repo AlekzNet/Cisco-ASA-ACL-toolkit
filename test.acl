@@ -1,0 +1,118 @@
+fi-essa-edge-fw01a# sh access-list Test-ACL
+access-list Test-ACL; 327925 elements; name hash: 0x29fc658a
+access-list Test-ACL line 1 remark 08-12-06 MatM Lab SSO
+access-list Test-ACL line 2 remark 08-12-06 MatM Lab NTP DNS
+access-list Test-ACL line 3 extended permit tcp object-group Lab-Intra object-group lab-dns-ntp eq 123 0xae17c6b1 
+  access-list Test-ACL line 3 extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x5dac1bd3 
+  access-list Test-ACL line 3 extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x96621da7 
+  access-list Test-ACL line 3 extended permit tcp 10.228.0.0 255.252.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0xeb7e713b 
+  access-list Test-ACL line 3 extended permit tcp 10.205.0.0 255.255.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x3ec3b114 
+  access-list Test-ACL line 3 extended permit tcp 10.205.0.0 255.255.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x020faf60 
+  access-list Test-ACL line 3 extended permit tcp 10.205.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x2f9cac55 
+  access-list Test-ACL line 3 extended permit tcp 10.232.0.0 255.248.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0xf0e39054 
+  access-list Test-ACL line 3 extended permit tcp 10.232.0.0 255.248.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0xdd33e9c5 
+  access-list Test-ACL line 3 extended permit tcp 10.232.0.0 255.248.0.0 10.3.8.4 255.255.255.254 neq 123 (hitcnt=0) 0xe366155b 
+  access-list Test-ACL line 3 extended permit tcp 10.206.0.0 255.255.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x46734486 
+  access-list Test-ACL line 3 extended permit tcp 10.206.0.0 255.255.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x7a396626 
+  access-list Test-ACL line 3 extended permit tcp 10.206.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x42764e24 
+  access-list Test-ACL line 3 extended permit tcp 10.240.0.0 255.240.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x1e467f9c 
+  access-list Test-ACL line 3 extended permit tcp 10.240.0.0 255.240.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x78403228 
+  access-list Test-ACL line 3 extended permit tcp 10.240.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x1f1bb6df 
+  access-list Test-ACL line 3 extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x30a84e64 
+  access-list Test-ACL line 3 extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x7fdeba77 
+  access-list Test-ACL line 3 extended permit tcp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x8272b909 
+  access-list Test-ACL line 3 extended permit tcp 10.192.0.0 255.248.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0xe89f1b28 
+  access-list Test-ACL line 3 extended permit tcp 10.192.0.0 255.248.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x614d0157 
+  access-list Test-ACL line 3 extended permit tcp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x68420d8a 
+<--- More --->                access-list Test-ACL line 3 extended permit tcp 10.160.0.0 255.248.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x954cfb50 
+  access-list Test-ACL line 3 extended permit tcp 10.160.0.0 255.248.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0xc9842410 
+  access-list Test-ACL line 3 extended permit tcp 10.160.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x88853a2f 
+  access-list Test-ACL line 3 extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0x3dc6e439 
+  access-list Test-ACL line 3 extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0xbd7c8f56 
+  access-list Test-ACL line 3 extended permit tcp 172.16.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x5f93ad44 
+  access-list Test-ACL line 3 extended permit tcp 10.208.0.0 255.240.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0xd3a96ea2 
+  access-list Test-ACL line 3 extended permit tcp 10.208.0.0 255.240.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x387526cd 
+  access-list Test-ACL line 3 extended permit tcp 10.208.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0xd7c1489f 
+  access-list Test-ACL line 3 extended permit tcp 10.225.0.0 255.255.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0xa9853d25 
+  access-list Test-ACL line 3 extended permit tcp 10.225.0.0 255.255.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0x4a3b9934 
+  access-list Test-ACL line 3 extended permit tcp 10.225.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0xa1de6c5b 
+  access-list Test-ACL line 3 extended permit tcp 10.226.0.0 255.255.0.0 host 10.3.0.2 eq 123 (hitcnt=0) 0xadeb4552 
+  access-list Test-ACL line 3 extended permit tcp 10.226.0.0 255.255.0.0 host 10.3.0.1 eq 123 (hitcnt=0) 0xc0995a50 
+  access-list Test-ACL line 3 extended permit tcp 10.226.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 123 (hitcnt=0) 0x4ea8243d 
+access-list Test-ACL line 4 extended permit tcp object-group Lab-Intra object-group lab-dns-ntp eq domain 0x144b62c1 
+  access-list Test-ACL line 4 extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0xe2358504 
+  access-list Test-ACL line 4 extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xb80ee626 
+  access-list Test-ACL line 4 extended permit tcp 10.228.0.0 255.252.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x2a3fbdab 
+  access-list Test-ACL line 4 extended permit tcp 10.205.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x2eff9e60 
+  access-list Test-ACL line 4 extended permit tcp 10.205.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x2473fe63 
+  access-list Test-ACL line 4 extended permit tcp 10.205.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x41aa760c 
+  access-list Test-ACL line 4 extended permit tcp 10.232.0.0 255.248.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x7049ef4a 
+  access-list Test-ACL line 4 extended permit tcp 10.232.0.0 255.248.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x6e7a2478 
+<--- More --->                access-list Test-ACL line 4 extended permit tcp 10.232.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xbbceb4ff 
+  access-list Test-ACL line 4 extended permit tcp 10.206.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x87e219a3 
+  access-list Test-ACL line 4 extended permit tcp 10.206.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x92843252 
+  access-list Test-ACL line 4 extended permit tcp 10.206.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xc3409a11 
+  access-list Test-ACL line 4 extended permit tcp 10.240.0.0 255.240.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x9504b24d 
+  access-list Test-ACL line 4 extended permit tcp 10.240.0.0 255.240.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x2e289672 
+  access-list Test-ACL line 4 extended permit tcp 10.240.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xb30181d7 
+  access-list Test-ACL line 4 extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x08bd2d93 
+  access-list Test-ACL line 4 extended permit tcp 13.20.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x2b56846e 
+  access-list Test-ACL line 4 extended permit tcp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xfd54445a 
+  access-list Test-ACL line 4 extended permit tcp 10.192.0.0 255.248.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0xe012ccda 
+  access-list Test-ACL line 4 extended permit tcp 10.192.0.0 255.248.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xa86ac8a0 
+  access-list Test-ACL line 4 extended permit tcp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xd0105640 
+  access-list Test-ACL line 4 extended permit tcp 10.160.0.0 255.248.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x6b551c06 
+  access-list Test-ACL line 4 extended permit tcp 10.160.0.0 255.248.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x45d3b236 
+  access-list Test-ACL line 4 extended permit tcp 10.160.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x50e10113 
+  access-list Test-ACL line 4 extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x84fd1562 
+  access-list Test-ACL line 4 extended permit tcp 172.16.0.0 255.240.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xd88c1c58 
+  access-list Test-ACL line 4 extended permit tcp 172.16.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xac0ebde2 
+  access-list Test-ACL line 4 extended permit tcp 10.208.0.0 255.240.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x3b16ba6f 
+  access-list Test-ACL line 4 extended permit tcp 10.208.0.0 255.240.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xe3ed4059 
+  access-list Test-ACL line 4 extended permit tcp 10.208.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xe12662ad 
+  access-list Test-ACL line 4 extended permit tcp 10.225.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x710eec4c 
+  access-list Test-ACL line 4 extended permit tcp 10.225.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x76198e49 
+<--- More --->                access-list Test-ACL line 4 extended permit tcp 10.225.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x39fc3a7e 
+  access-list Test-ACL line 4 extended permit tcp 10.226.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x62325fee 
+  access-list Test-ACL line 4 extended permit tcp 10.226.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x72a4b0f5 
+  access-list Test-ACL line 4 extended permit tcp 10.226.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x9cdf72fd 
+access-list Test-ACL line 5 extended permit udp object-group Lab-Intra object-group lab-dns-ntp eq domain 0x1c2f569e 
+  access-list Test-ACL line 5 extended permit udp 10.228.0.0 255.252.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0xe237af2e 
+  access-list Test-ACL line 5 extended permit udp 10.228.0.0 255.252.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xf2a944e3 
+  access-list Test-ACL line 5 extended permit udp 10.228.0.0 255.252.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x9bba38c3 
+  access-list Test-ACL line 5 extended permit udp 10.205.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x48aae823 
+  access-list Test-ACL line 5 extended permit udp 10.205.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x82b6943a 
+  access-list Test-ACL line 5 extended permit udp 10.205.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xfdbde24d 
+  access-list Test-ACL line 5 extended permit udp 10.232.0.0 255.248.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x44913bf8 
+  access-list Test-ACL line 5 extended permit udp 10.232.0.0 255.248.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x410e10ff 
+  access-list Test-ACL line 5 extended permit udp 10.232.0.0 255.248.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xb8654ea3 
+  access-list Test-ACL line 5 extended permit udp 10.206.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0xa9ef292c 
+  access-list Test-ACL line 5 extended permit udp 10.206.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x925c6462 
+  access-list Test-ACL line 5 extended permit udp 10.206.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0xdf48026f 
+  access-list Test-ACL line 5 extended permit udp 10.240.0.0 255.240.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0xb84e10c9 
+  access-list Test-ACL line 5 extended permit udp 10.240.0.0 255.240.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0x2461bab0 
+  access-list Test-ACL line 5 extended permit udp 10.240.0.0 255.240.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x0d53912e 
+  access-list Test-ACL line 5 extended permit udp 13.20.0.0 255.255.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x49022527 
+  access-list Test-ACL line 5 extended permit udp 13.20.0.0 255.255.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xdfea078e 
+  access-list Test-ACL line 5 extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq domain (hitcnt=0) 0x33864bb1 
+  access-list Test-ACL line 5 extended permit udp 10.192.0.0 255.248.0.0 host 10.3.0.2 eq domain (hitcnt=0) 0x33a0c39c 
+<--- More --->                access-list Test-ACL line 5 extended permit udp 10.192.0.0 255.248.0.0 host 10.3.0.1 eq domain (hitcnt=0) 0xcf651afe 
+  access-list Test-ACL line 5 extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit ip 10.0.0.0 255.0.0.0 10.3.8.4 255.255.255.254 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit tcp 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 eq 22(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit tcp 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 eq 23(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit tcp 10.0.0.0 255.0.0.0 10.3.9.1 255.255.255.254 eq 23(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit tcp 10.0.0.0 255.0.0.0 10.3.9.2 255.255.255.254 eq 23(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit tcp 10.0.0.0 255.0.0.0 10.4.9.0 255.255.255.0 eq 23(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit ip 10.0.0.0 255.0.0.0 10.4.0.0 255.255.0.0 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 6 extended permit ip 10.0.0.0 255.0.0.0 10.5.0.0 255.255.0.0 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 7 extended permit udp any 10.3.10.0 255.255.255.0 gt 30000 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 7 extended permit udp any 10.3.10.0 255.255.255.0 eq 40000 (hitcnt=0) 0x37cf3004 
+  access-list Test-ACL line 15 extended permit tcp 10.192.0.0 255.248.0.0 10.7.8.0 255.255.255.0 range 1200 1300 (hitcnt=0) 0x37cf3004 
+  access-list Test-ACL line 16 extended permit tcp 10.192.0.0 255.248.0.0 10.7.8.0 255.255.255.0 range 1250 1350 (hitcnt=0) 0x37cf3004 
+  access-list Test-ACL line 17 extended permit tcp 10.192.0.0 255.248.0.0 10.7.8.0 255.255.255.0 eq 1351 (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 36 extended permit tcp 10.0.0.0 255.0.0.0 10.8.9.4 255.255.255.254 eq 22(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 36 extended permit tcp 10.0.0.0 255.0.0.0 10.8.9.4 255.255.255.254 eq 23(hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 7 extended permit icmp any any (hitcnt=0) 0x37cf3004 
+ access-list Test-ACL line 8 extended deny ip any any (hitcnt=0) 0x37cf3004 
