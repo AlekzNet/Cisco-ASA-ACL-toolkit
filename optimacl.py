@@ -115,6 +115,7 @@ for line in f:
 
 star_nets = cidr_merge(star_nets)
 
+# TODO: this part should be rewritten in the protocol-agnostic manner
 # Second iteration
 # Combine services together and remove overlaps
 # Iterating over policy.keys(), because some entries will be removed from policy
