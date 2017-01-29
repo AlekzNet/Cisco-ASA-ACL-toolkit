@@ -166,7 +166,7 @@ for net in policy:
 		if srv in services.keys():
 			services[srv].append(net)
 		else:
-			services[srv] = list(net)
+			services[srv] = [net]
 
 
 if args.group:
