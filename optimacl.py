@@ -50,14 +50,19 @@ def udpadd(srv):
 	else:
 		udpsrv.append(int(srv))
 
+# Add non UDP or TCP protocol
+def ipadd(srv):
+	ipsrv.append(srv)
+
 # Functions, corresponding to TCP abd UDP
-protoadd = { 'tcp': tcpadd, 'udp': udpadd}
+protoadd = { 'tcp': tcpadd, 'udp': udpadd, 'ip': ipadd}
 
 # Sort all ports, remove duplicates, and group in continuous ranges
-# Explanatin how it works here:
+# Explanation how it works here:
 # http://stackoverflow.com/questions/2154249/identify-groups-of-continuous-numbers-in-a-list
 # https://docs.python.org/2.6/library/itertools.html#examples
 def squeeze(arr):
+#	if len(arr) == 1: return [arr[0],arr[-1]]
 	ranges = []
 	for k, g in groupby(enumerate(sorted(set(arr))), lambda (x,y):x-y):
 		group = map(itemgetter(1), g)
@@ -118,17 +123,25 @@ for net in policy.keys():
 	if isnetin(net,star_nets):
 #		print "Policy is in star_nets"
 		del policy[net]
-	else:
+	elif len(policy[net]) > 1:
 		# Filling tcpsrv and udpsrv arrays with ports from the policy
 		tcpsrv=[]
 		udpsrv=[]
+		ipsrv=[]
 		for srv in policy[net]:
 #			print "srv=",srv
-			proto,ports = srv.split(":")
+			if ":" in srv:
+				proto,ports = srv.split(":")
+			else:
+				proto = "ip"
+				ports = srv
 			srvadd = protoadd[proto]
 			srvadd(ports)
 		# Creating new port list
 		policy[net]=[]
+		if len(ipsrv) > 0:
+			for ports in ipsrv:
+				policy[net].append(ports)
 		if len(tcpsrv) > 0:
 			for ports in squeeze(tcpsrv):
 				if ports[0] == ports[1]:
@@ -143,8 +156,6 @@ for net in policy.keys():
 					policy[net].append("udp:"+str(ports[0])+"-"+str(ports[1]))
 #		print "new: ",policy[net]
 
-
-#print "Third iteration"
 
 # Third iteration is to create an IPSet of networks per allowed service
 # From policy to services
@@ -180,7 +191,9 @@ if args.group:
 	# Printing the result
 	for net in policy:
 		print net,",".join(policy[net])
-	print ",".join(map(lambda x: str(x),star_nets)),"*"
+#	CIDR /xx notation
+#	print ",".join(map(lambda x: str(x),star_nets)),"*"
+	print ",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),star_nets)),"*"
 
 else:
 	# CIDR-merging IPNetworks, corresponding to the service

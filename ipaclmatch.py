@@ -117,7 +117,7 @@ def isnetin(ip,mask):
 def print_acl():
 	global line
 	if args.transform:
-		if "icmp" in arr[6]: return
+#		if "icmp" in arr[6]: return
 		if args.policy:
 			host2num("src")
 			host2num("dst")
@@ -157,10 +157,13 @@ def prepsvc():
 	if len(arr)-1 >= 12: serv2num(12)
 	if len(arr)-1 >= 13: serv2num(13)
 	if "ip" in arr[6]: arr.insert(11,"*")
+	elif len(arr) < 12: arr.insert(11, arr[6])
 	elif "range" in arr[11]: arr[11] = arr[6]+':'+arr[12]+'-'+arr[13]
 	elif "neq" in arr[11]:
 		if args.range:
+			# the first range goes into arr[11]
 			arr[11] = arr[6]+':1-'+str(int(arr[12])-1)
+			# the second range is returned
 			return arr[6]+':'+str(int(arr[12])+1)+'-65535'
 		else:
 			arr[11] = arr[6]+'!'+arr[12]
@@ -175,7 +178,6 @@ def prepsvc():
 			arr[11] = arr[6]+':1-'+arr[12]
 		else:
 			arr[11] = arr[6]+'>'+arr[12]
-	else: arr[11] = arr[6]
 	return False
 
 # Replace service name with port number
