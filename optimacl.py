@@ -32,41 +32,33 @@ def check_line():
 
 # Range (port1-port2) to range (port1, port+1, ... port2)
 # srv is a port list, e.g. ["1000", "2000"]
-def rtor(srvarr,srv):
+def rtor(arr,srv):
 	for i in range(int(srv[0]),int(srv[1])+1):
-		srvarr.append(i)
+		arr.append(i)
 
-# Add ports to the TCP array
-def tcpadd(srv):
-	if "-" in srv:
-		rtor(tcpsrv,srv.split("-"))
+# Add ports to the port array
+def srvadd(port,arr):
+	if "-" in port:
+		rtor(arr,port.split("-"))
 	else:
-		tcpsrv.append(int(srv))
-
-# Add ports to the UDP array
-def udpadd(srv):
-	if "-" in srv:
-		rtor(udpsrv,srv.split("-"))
-	else:
-		udpsrv.append(int(srv))
-
-# Add non UDP or TCP protocol
-def ipadd(srv):
-	ipsrv.append(srv)
-
-# Functions, corresponding to TCP abd UDP
-protoadd = { 'tcp': tcpadd, 'udp': udpadd, 'ip': ipadd}
+		arr.append(int(port))
 
 # Sort all ports, remove duplicates, and group in continuous ranges
 # Explanation how it works here:
 # http://stackoverflow.com/questions/2154249/identify-groups-of-continuous-numbers-in-a-list
 # https://docs.python.org/2.6/library/itertools.html#examples
 def squeeze(arr):
-#	if len(arr) == 1: return [arr[0],arr[-1]]
+	srvarr = []
 	ranges = []
-	for k, g in groupby(enumerate(sorted(set(arr))), lambda (x,y):x-y):
+	for port in arr:
+		srvadd(port,srvarr)
+
+	for k, g in groupby(enumerate(sorted(set(srvarr))), lambda (x,y):x-y):
 		group = map(itemgetter(1), g)
-		ranges.append((group[0], group[-1]))
+		if group[0] == group[-1]:
+			ranges.append(str(group[0]))
+		else:
+			ranges.append(str(group[0])+"-"+str(group[-1]))
 	return ranges
 
 # Print "star" networks
@@ -95,7 +87,7 @@ f=sys.stdin if "-" == args.pol else open(args.pol,"r")
 # First iteration is to create a list of services per network
 # If all ports (*) are allowed for a network, then place
 # this network in star_nets, and replace the service list with "*"
-# policy is a dict of IPNetwork: [ port_list]
+# policy is a dict of IPNetwork: {proto1:[port_list], proto2:[port_list]}
 for line in f:
 	check_line()
 	net,mask,service = line.split()
@@ -107,58 +99,42 @@ for line in f:
 			del policy[network]
 		star_nets.append(network)
 	else:
-		if service not in policy.get(network,''):
-			if len(policy.get(network,'')) == 0:
-				policy[network] = []
-			policy[network].append(service)
+		proto,port = service.split(":") if ":" in service else [service,""]
+		if network not in policy:
+			policy[network]={}
+		if proto not in policy[network]:
+			policy[network][proto]=[]
+		if port and port not in policy[network][proto]:
+			policy[network][proto].append(port)
+
+print policy
 
 
 star_nets = cidr_merge(star_nets)
 
-# TODO: this part should be rewritten in the protocol-agnostic manner
 # Second iteration
 # Combine services together and remove overlaps
 # Iterating over policy.keys(), because some entries will be removed from policy
 for net in policy.keys():
-#	print "policy:", net, policy[net]
 	if isnetin(net,star_nets):
-#		print "Policy is in star_nets"
 		del policy[net]
-	elif len(policy[net]) > 1:
-		# Filling tcpsrv and udpsrv arrays with ports from the policy
-		tcpsrv=[]
-		udpsrv=[]
-		ipsrv=[]
-		for srv in policy[net]:
-#			print "srv=",srv
-			if ":" in srv:
-				proto,ports = srv.split(":")
+	else:
+		for proto in policy[net]:
+			if len(policy[net][proto]) > 1:
+				# First combine all TCP/UDP services
+				if "tcp" in proto or "udp" in proto:
+					policy[net][proto] = squeeze(policy[net][proto])
+		tmparr = policy[net]
+		policy[net] = []
+		for proto in tmparr:
+			if tmparr[proto]:
+				for port in tmparr[proto]:
+					policy[net].append(proto+":"+port)
 			else:
-				proto = "ip"
-				ports = srv
-			srvadd = protoadd[proto]
-			srvadd(ports)
-		# Creating new port list
-		policy[net]=[]
-		if len(ipsrv) > 0:
-			for ports in ipsrv:
-				policy[net].append(ports)
-		if len(tcpsrv) > 0:
-			for ports in squeeze(tcpsrv):
-				if ports[0] == ports[1]:
-					policy[net].append("tcp:"+str(ports[0]))
-				else:
-					policy[net].append("tcp:"+str(ports[0])+"-"+str(ports[1]))
-		if len(udpsrv) > 0:
-			for ports in squeeze(udpsrv):
-				if ports[0] == ports[1]:
-					policy[net].append("udp:"+str(ports[0]))
-				else:
-					policy[net].append("udp:"+str(ports[0])+"-"+str(ports[1]))
-#		print "new: ",policy[net]
+				policy[net].append(proto)
+print policy
 
-
-# Third iteration is to create an IPSet of networks per allowed service
+# Third iteration is to create a list of networks per allowed service
 # From policy to services
 # policy is a dict of IPNetwork: [ port_list]
 # services is a dict of Service: list(IPNetworks)
@@ -175,7 +151,7 @@ if args.group:
 	policy = {}
 	for service in services:
 		# services[service] contains an IPSet
-		# 1. CIDR merge the IPSet into a list of IPNetworks
+		# 1. CIDR merge the list of IPNetworks
 		# 2. Iterate through the list and convert the nets into strings
 		# with IP-address/netmask
 		# 3. Join them together using "," as a separator
