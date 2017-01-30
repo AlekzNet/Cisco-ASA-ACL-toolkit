@@ -107,8 +107,6 @@ for line in f:
 		if port and port not in policy[network][proto]:
 			policy[network][proto].append(port)
 
-print policy
-
 
 star_nets = cidr_merge(star_nets)
 
@@ -132,7 +130,6 @@ for net in policy.keys():
 					policy[net].append(proto+":"+port)
 			else:
 				policy[net].append(proto)
-print policy
 
 # Third iteration is to create a list of networks per allowed service
 # From policy to services
