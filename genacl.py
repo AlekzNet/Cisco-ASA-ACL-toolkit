@@ -31,8 +31,10 @@ def port(service):
 				return "gt " +low
 			else:
 				return "range "+low+" "+high
-		else:
+		elif "icmp" not in tmp[0]:
 			return "eq "+tmp[1]
+		else:
+			return tmp[1]
 	else:
 		return ''
 
