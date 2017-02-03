@@ -11,6 +11,12 @@ Utilities for parsing, analyzing, modifying and generating Cisco ASA ACLs. Usefu
 * [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc)
 * [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) - utility to generate ASA ACL's from a proto-policy
 
+## Requirements
+
+* Expect (for the data collector)
+* Python 2.7
+* Netaddr
+
 Install netaddr:
 
 ```sh
