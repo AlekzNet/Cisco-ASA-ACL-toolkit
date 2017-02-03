@@ -3,7 +3,9 @@ Utilities for parsing, analyzing, modifying and generating Cisco ASA ACLs. Usefu
 
 ## Files
 
+* asa.sh - Shell script to remotely collect the ASA configs
 * asa.exp - expect script to remotely get the configuration, access-groups and access lists
+* asa.list - list of Cisco ASA firewall IP's and hostnames 
 * test.acl - test ACL
 * [ipaclmatch.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/ipaclmatch.md) - utility to search for rules matching IP-addresses, the networks they belong to, subnetworks, and generate a proto-policy.
 * [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc)
