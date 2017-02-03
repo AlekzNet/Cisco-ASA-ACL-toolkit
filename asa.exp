@@ -36,21 +36,30 @@ log_user 0
 
 log_file -noappend -a ${logfile}.groups
 send "sh run | inc access-group\n"
-expect "$hostname*#"
+expect {
+"$hostname/*#" {}
+"$hostname#" {}
+}
 log_file
 send_user "\n${hostname} ACL groups saved\n"
 
-set timeout 600
+set timeout 3600
 
 log_file -noappend -a ${logfile}.conf
 send "sh run \r"
-expect "$hostname*#"
+expect {
+"$hostname/*#" {}
+"$hostname#" {}
+}
 log_file
 send_user "\n${hostname} config  saved\n"
 
 log_file -noappend -a ${logfile}.acl
 send "sh access-list \r"
-expect "$hostname*#"
+expect {
+"$hostname/*#" {}
+"$hostname#" {}
+}
 log_file
 send_user "\n${hostname} ACLs saved\n"
 
