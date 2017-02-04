@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# http://www.cisco.com/c/en/us/td/docs/security/asa/asa90/configuration/guide/asa_90_cli_config/acl_extended.html
+
 import string
 import argparse
 import re
@@ -71,7 +73,7 @@ def issrc():
 # arr[9] -- dest IP-address or host
 # arr[10] -- netmask or hostip
 def isdst():
-	if "range" in arr[9]: del arr[9:12]
+
 	if "host" in arr[9]:
 		arr[9] = arr[10]
 		arr[10] = "255.255.255.255"
@@ -186,7 +188,10 @@ def prepsvc():
 def serv2num(f):
 	if re.match(r'\d+',arr[f]): return  # if number nothing to do
 	if arr[f] in s2n: arr[f]=s2n[arr[f]]
-	else: quit(arr[f] + " is not a known service")
+	else:
+		print >>sys.stderr, line
+		print >>sys.stderr, arr[f] + " is not a known service"
+		sys.exit(1)
 
 
 
@@ -205,7 +210,8 @@ f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 for line in f:
 
 	# Remove leftovers
-	if "remark" in line or "object-group" in line or not "extended" in line: continue
+	if "remark" in line or "object-group" in line or " object " in line or not "extended" in line: continue
+	line=re.sub(r'[ 	][ 	]*',' ',line) 	#replace all multiple tabs and.or spces with a sigle space
 	line=re.sub(r'\(hitcnt.*$','',line)		#remove hitcounters
 	line=re.sub(r' log .*$','',line)		#remove logging statements
 	line=line.replace(r'<--- More --->','')
@@ -213,7 +219,7 @@ for line in f:
 
 	# Replace any with 0/0
 	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
-
+	line=re.sub(r'\bany4\b','0.0.0.0 0.0.0.0',line)
 	arr = line.split()
 
 	# We are not interested in permit lines, if --deny is set
@@ -229,6 +235,10 @@ for line in f:
 		action = ''
 
 	if args.both and args.noany and "0.0.0.0 0.0.0.0" in line: continue
+
+	# Source ports are not supported yet
+	if "range" in arr[9]: del arr[9:12]
+	if "eq" in arr[9]: del arr[9:11]
 
 	if "0.0.0.0/0" in args.addr and not args.any and not args.noany:
 		print_acl()
