@@ -44,7 +44,7 @@ pip install netaddr
 
 ### Examples
 
-Show the amount of matching ACLs for the IPs found in the source and destination. See asasearch.sh for used parameters. The script processes 3mln entries in ~7min.
+Show the amount of matching ACLs for the IPs found in the source and destination. See asasearch.sh for used parameters. The script processes 3mln entries in ~7min (two passes).
 
 ```txt
 ./asasearch.sh 10.1.0.0/16             
