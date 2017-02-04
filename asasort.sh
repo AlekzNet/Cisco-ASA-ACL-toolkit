@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for fw in `cat asa.list | awk '{print $2}'`
+for fw in `awk '{print $2}' asa.list`
 do
 	echo $fw
 	for acl in `awk '/^access-group/ {print $2}' $fw/$fw*groups`
