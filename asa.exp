@@ -54,7 +54,7 @@ expect {
 log_file
 send_user "\n${hostname} config  saved\n"
 
-log_file -noappend -a ${logfile}.acl
+log_file -noappend -a ${logfile}.out
 send "sh access-list\r"
 expect {
 "$hostname/*#" {}
