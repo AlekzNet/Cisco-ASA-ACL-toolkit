@@ -25,6 +25,9 @@ Install netaddr:
 ```sh
 pip install netaddr
 ```
+## Limitations
+
+IPv6 and source ports are not supported.
 
 ## Collecting data
 
