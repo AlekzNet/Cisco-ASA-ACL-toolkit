@@ -25,6 +25,22 @@ Install netaddr:
 pip install netaddr
 ```
 
+## Collecting data
+
+* Edit asa.list and place a list of the firewall IP-addresses and firewall hostnames (as in the ASA config). No empty lines.
+* Enter username/passwords in asa.sh, or uncomment lines that take the info from the keyboard
+* Run asa.sh. It will: 
+  * create directories with the firewall names
+  * log onto the firewalls
+  * run the following commands:
+    * terminal pager 0 
+    * sh run | inc access-group
+    * sh run
+    * sh access-list
+  * save the result in the fwname.group, fwname.conf and fwname.out file in the fwname directories
+* Run asasort.sh. It will create ACLname.acl files with corresponding policies in the fwname directories
+
+
 ### Example
 
 For all permitted source addresses in test.acl create an optimized policy
