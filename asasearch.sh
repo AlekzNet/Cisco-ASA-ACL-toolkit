@@ -5,8 +5,8 @@ for acl in */*.acl
 do
 	for dir in src dst
 	do
-		cnt=`ipaclmatch.py --noany --permit --$dir -a $IPS $acl | wc -l`
-#		cnt=`ipaclmatch.py --permit --$dir -a $IPS $acl | wc -l`
-		echo $acl $dir $cnt
+		eval cnt${dir}=`ipaclmatch.py --noany --permit --$dir -a $IPS $acl | wc -l | awk '{print $1}'`
+#		eval cnt${dir}=`ipaclmatch.py --permit --$dir -a $IPS $acl | wc -l | awk '{print $1}'`
 	done
+	echo $acl $cntsrc $cntdst
 done
