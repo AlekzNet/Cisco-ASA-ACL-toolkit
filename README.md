@@ -41,7 +41,26 @@ pip install netaddr
 * Run asasort.sh. It will create ACLname.acl files with corresponding policies in the fwname directories
 
 
-### Example
+### Examples
+
+Show the amount of matching ACLs for the IPs found in the source and destination. See asasearch.sh for used parameters. The script processes 3mln entries in ~7min.
+
+```txt
+./asasearch.sh 10.1.0.0/16             
+fw1/FW_ACL_1.acl 0 0
+fw1/FW_ACL_2.acl 0 0
+fw2/FW_ACL_1.acl 0 0
+fw2/FW_ACL_management.acl 0 0
+fw2/FW_ACL_2.acl 4 74
+fw2/FW_ACL_3.acl 0 114
+fw2/FW_ACL_4.acl 0 1
+fw2/FW_ACL_5.acl 4737 16
+fw2/FW_ACL_6.acl 0 73
+fw2/FW_ACL_7.acl 15 84
+fw3/FW_ACL_1.acl 6 16
+fw3/FW_ACL_2.acl 0 0
+
+```
 
 For all permitted source addresses in test.acl create an optimized policy
 
