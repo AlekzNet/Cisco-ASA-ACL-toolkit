@@ -1,5 +1,8 @@
-#!/bin/bash
-
+#!/bin/ksh
+# Prints the amount of matching ACLs for the IPs 
+# found in the source and destination
+# Takes a list of IP's as an argument
+# E.g. asasearch.sh 10.0.1.64/28,10.0.1.68
 IPS=$*
 for acl in */*.acl
 do
