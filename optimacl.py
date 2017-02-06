@@ -76,6 +76,7 @@ def isnetin(net,netlist):
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
 parser.add_argument('--group', help='Group services and networks together', action="store_true")
+parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
 
 services={}
@@ -95,8 +96,8 @@ for line in f:
 	if "*" in service:
 # The following two lines can be commented out if memory is not
 # an issue
-		if not len(policy.get(network,'')) == 0:
-			del policy[network]
+#		if not len(policy.get(network,'')) == 0:
+#			del policy[network]
 		star_nets.append(network)
 	else:
 		proto,port = service.split(":") if ":" in service else [service,""]
@@ -120,7 +121,7 @@ for net in policy.keys():
 		for proto in policy[net]:
 			if len(policy[net][proto]) > 1:
 				# First combine all TCP/UDP services
-				if "tcp" in proto or "udp" in proto:
+				if ("tcp" in proto or "udp" in proto) and not args.nomerge:
 					policy[net][proto] = squeeze(policy[net][proto])
 		tmparr = policy[net]
 		policy[net] = []
