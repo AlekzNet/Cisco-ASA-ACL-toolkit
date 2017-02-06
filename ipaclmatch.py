@@ -210,14 +210,13 @@ for line in f:
 	# Remove leftovers
 	if "remark" in line or "object-group" in line or " object " in line or not "extended" in line: continue
 	line=re.sub(r'[ 	][ 	]*',' ',line) 	#replace all multiple tabs and.or spces with a sigle space
-	line=re.sub(r'\(hitcnt.*$','',line)		#remove hitcounters
-	line=re.sub(r' log .*$','',line)		#remove logging statements
+	line=re.sub(r'\(hitcnt.*$| log .*$','',line)		#remove hitcounters and logging statements
 	line=line.replace(r'<--- More --->','')
 	line = line.strip()
 
 	# Replace any with 0/0
-	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
-	line=re.sub(r'\bany4\b','0.0.0.0 0.0.0.0',line)
+	line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',line)
+
 	arr = line.split()
 
 	# We are not interested in permit lines, if --deny is set
@@ -236,7 +235,8 @@ for line in f:
 
 	# Source ports are not supported yet
 	if "range" in arr[9]: del arr[9:12]
-	if "eq" in arr[9]: del arr[9:11]
+	if "eq" in arr[9] or "lt" in arr[9] or "gt" in arr[9] or "neq" in arr[9]:
+		del arr[9:11]
 
 	if "0.0.0.0/0" in args.addr and not args.any and not args.noany:
 		print_acl()
