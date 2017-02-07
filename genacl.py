@@ -6,7 +6,7 @@ import re
 import sys
 
 try:
-	from netaddr import *
+	import netaddr
 except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
@@ -42,7 +42,7 @@ def addr_form(addr):
 	if "any" in addr or "0.0.0.0 0.0.0.0" in addr or "0.0.0.0/0" in addr:
 		return "any"
 	elif re.match(r'^\d',addr):
-		tmp=IPNetwork(addr.replace(" ","/"))
+		tmp=netaddr.IPNetwork(addr.replace(" ","/"))
 		if '255.255.255.255' in str(tmp.netmask):
 			return "host "+str(tmp.ip)
 		else:

@@ -7,7 +7,7 @@ import argparse
 import re
 import sys
 try:
-	from netaddr import *
+	import netaddr
 except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
@@ -44,21 +44,21 @@ def isdst():
 def isdir(ip,mask):
 	result = False
 	for i in ips:
-		result = result or ( str(IPNetwork(i).ip) == ip and str(IPNetwork(i).netmask) == mask )
+		result = result or ( str(netaddr.IPNetwork(i).ip) == ip and str(netaddr.IPNetwork(i).netmask) == mask )
 	return result
 
 # Does any of the IP-addresses we are searching for belong to the current IP network?
 def isinnet(ip,mask):
 	result = False
 	for i in ips:
-		result = result or i in IPNetwork(ip + "/" + mask)
+		result = result or i in netaddr.IPNetwork(ip + "/" + mask)
 	return result
 
 # Does any of the IP-addresses we are searching for contains the current IP network?
 def isnetin(ip,mask):
 	result = False
 	for i in ips:
-		result = result or IPNetwork(ip + "/" + mask) in i
+		result = result or netaddr.IPNetwork(ip + "/" + mask) in i
 	return result
 
 # Postformat the ACL and print
@@ -199,9 +199,9 @@ arr = []
 # If a list of IP's is given, add them all
 if "," in args.addr:
 	for i in args.addr.split(","):
-		ips.append(IPNetwork(i))
+		ips.append(netaddr.IPNetwork(i))
 else:
-		ips.append(IPNetwork(args.addr))
+		ips.append(netaddr.IPNetwork(args.addr))
 
 f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 

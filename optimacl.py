@@ -8,7 +8,7 @@ from operator import itemgetter
 from itertools import groupby
 
 try:
-	from netaddr import *
+	import netaddr
 except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
@@ -92,7 +92,7 @@ f=sys.stdin if "-" == args.pol else open(args.pol,"r")
 for line in f:
 	check_line()
 	net,mask,service = line.split()
-	network=IPNetwork(net+"/"+mask)
+	network=netaddr.IPNetwork(net+"/"+mask)
 	if "*" in service:
 # The following two lines can be commented out if memory is not
 # an issue
@@ -109,7 +109,7 @@ for line in f:
 			policy[network][proto].append(port)
 
 
-star_nets = cidr_merge(star_nets)
+star_nets = netaddr.cidr_merge(star_nets)
 
 # Second iteration
 # Combine services together and remove overlaps
@@ -148,14 +148,14 @@ if args.group:
 	# Let's reuse policy dict
 	policy = {}
 	for service in services:
-		# services[service] contains an IPSet
+		# services[service] contains a list of IPNetworks
 		# 1. CIDR merge the list of IPNetworks
 		# 2. Iterate through the list and convert the nets into strings
 		# with IP-address/netmask
 		# 3. Join them together using "," as a separator
 		# The commented out line can be used instead to generate the CIDR /xx notation
 #		networks=",".join(map(lambda x: str(x),cidr_merge(services[service])))
-		networks=",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),cidr_merge(services[service])))
+		networks=",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),netaddr.cidr_merge(services[service])))
 		if service not in policy.get(networks,''):
 			if len(policy.get(networks,'')) == 0:
 				policy[networks] = []
@@ -174,7 +174,7 @@ else:
 	# CIDR-merging IPNetworks, corresponding to the service
 	# And print the result
 	for srv in services:
-		for net in cidr_merge(services[srv]):
+		for net in netaddr.cidr_merge(services[srv]):
 			print net.ip, net.netmask, srv
 
 
