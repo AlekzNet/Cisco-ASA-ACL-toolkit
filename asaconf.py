@@ -33,6 +33,7 @@ aclmode = False
 rulecnt = 0 # ACL rule counter
 # global curobj points to the current dict: netobj, netgrp or srvgrp
 # global curname points to the current object name
+# curproto points to the current protocol
 #global curobj,curname
 
 #object network mynet1
@@ -47,10 +48,16 @@ re_netgrp = re.compile('^\s*object-group\s+network\s+(?P<net_grp>\S+)', re.IGNOR
 re_netobj = re.compile('^\s*network-object\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.IGNORECASE)
 #object-group service mysrvgrp1
 re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)', re.IGNORECASE)
+#object-group service srv_tcp tcp
+re_srvgrp_proto = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s+(?P<proto>\S+)', re.IGNORECASE)
+# port-object eq ldaps
+re_portobj = re.compile('^\s*port-object\s+(?P<service>.*$)', re.IGNORECASE)
 # group-object net-10.1.0.0-16
 re_grpobj = re.compile('^\s*group-object\s+(?P<grp_obj>\S+)', re.IGNORECASE)
 # service-object tcp destination eq 123
-re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)\s+destination\s+(?P<service>.*$)', re.IGNORECASE)
+re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)(\s+destination)?\s+(?P<service>.*$)', re.IGNORECASE)
+# service-object 97
+re_srvobj_ip = re.compile('^\s*service-object\s+(?P<proto>\d+)', re.IGNORECASE)
 
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
@@ -85,6 +92,13 @@ for line in f:
 		if re_srvobj.search(line):
 			fillobj(curobj, curname, re_srvobj.search(line).group('proto') + ':' +
 				re_srvobj.search(line).group('service'))
+		if re_srvgrp_proto.search(line):
+			newobj(srvgrp,re_srvgrp_proto.search(line).group('srv_grp'))
+			curproto = re_srvgrp_proto.search(line).group('proto')
+		if re_portobj.search(line):
+			fillobj(curobj, curname, curproto + ':' + re_portobj.search(line).group('service'))
+		if re_srvobj_ip.search(line):
+			fillobj(curobj, curname, re_srvobj_ip.search(line).group('proto'))
 		if re_aclname.search(line): aclmode = True
 
 	else:
