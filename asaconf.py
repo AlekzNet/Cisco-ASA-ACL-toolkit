@@ -4,6 +4,7 @@ import string
 import argparse
 import re
 import sys
+import pprint
 try:
 	import netaddr
 except ImportError:
@@ -49,7 +50,7 @@ re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)', re.IGNOR
 # group-object net-10.1.0.0-16
 re_grpobj = re.compile('^\s*group-object\s+(?P<grp_obj>\S+)', re.IGNORECASE)
 # service-object tcp destination eq 123
-re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)\s+destination\s+(?P<service>\S+)', re.IGNORECASE)
+re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)\s+destination\s+(?P<service>.*$)', re.IGNORECASE)
 
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
@@ -60,14 +61,18 @@ f=sys.stdin if "-" == args.conf else open (args.conf,"r")
 
 for line in f:
 	line = line.rstrip()
+	# Parsing and filling in network and service objects
 	if not aclmode:
 		if re_objnet.search(line):
 			newobj(netobj,re_objnet.search(line).group('obj_name'))
 		if re_subnet.search(line):
-			fillobj(curobj, curname, netaddr.IPNetwork(re_subnet.search(line).group('ip') +
-				'/' + re_subnet.search(line).group('mask')))
+			curobj[curname]=netaddr.IPNetwork(re_subnet.search(line).group('ip') +
+				'/' + re_subnet.search(line).group('mask'))
+#			fillobj(curobj, curname, netaddr.IPNetwork(re_subnet.search(line).group('ip') +
+#				'/' + re_subnet.search(line).group('mask')))
 		if re_host.search(line):
-			fillobj(curobj, curname, netaddr.IPNetwork(re_host.search(line).group('ip') + '/32'))
+			curobj[curname]=netaddr.IPNetwork(re_host.search(line).group('ip') + '/32')
+#			fillobj(curobj, curname, netaddr.IPNetwork(re_host.search(line).group('ip') + '/32'))
 		if re_netgrp.search(line):
 			newobj(netgrp,re_netgrp.search(line).group('net_grp'))
 		if re_netobj.search(line):
@@ -86,10 +91,10 @@ for line in f:
 		rulecnt += 1
 
 print 'netobj'
-print netobj
+pprint.pprint(netobj)
 print 'netgrp'
-print netgrp
+pprint.pprint(netgrp)
 print 'srvgrp'
-print srvgrp
+pprint.pprint(srvgrp)
 print '\n'
 print 'total rules: ', rulecnt
