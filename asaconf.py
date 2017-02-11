@@ -30,7 +30,7 @@ def unfold(objarr):
 		unfold_rec(objarr[obj],objarr)
 
 
-# Ubfold all included objects
+# Unfold all included objects
 def unfold_rec(obj, objarr):
 	for item in obj:
 		# If object-group is found,
@@ -45,21 +45,41 @@ def unfold_rec(obj, objarr):
 				# and dive into the new updated object
 				unfold_rec(obj, objarr)
 
+def html_hdr(title):
+	print '<html lang=en><head><title>' + title + '</title></head><body>'
+
+def html_tbl_hdr(title):
+	print '<table><caption>' + title + '<tr><th>Line #</th><th>Source</th> \
+	<th><Destination></th><th>Service</th><th>Action</th></tr>'
+
+def html_tbl_ftr():
+	print '</table>'
+
+def html_ftr():
+	print '</body></html>'
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('conf', default="-", nargs='?', help="Cisco ASA conf filename or \"-\" to read from the console (default)")
+out = parser.add_mutually_exclusive_group()
+out.add_argument('--html', default=True, help="Cisco policy to HTML", action="store_true")
+out.add_argument('--acl', default=False, help="Cisco policy to sh access-list", action="store_true")
 args = parser.parse_args()
+if args.acl: args.html=False
 
 netobj = {}	# network-objects
 netgrp = {}	# network-groups
 srvgrp = {}	# service-groups
 aclmode = False
 rulecnt = 0 # ACL rule counter
+curacl = '' # current ACL name
 # global curobj points to the current dict: netobj, netgrp or srvgrp
 # global curname points to the current object name
 # curproto points to the current protocol
 #global curobj,curname
 
+# hostname fw_name
+re_hostname = re.compile('^\s*hostname\s+(?P<hostname>\S+)', re.IGNORECASE)
 #object network mynet1
 re_objnet = re.compile('^\s*object\s+network\s+(?P<obj_name>\S+)', re.IGNORECASE)
 # subnet 10.1.2.0 255.255.255.0
@@ -84,6 +104,7 @@ re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)(\s+destination)?\s+(
 re_srvobj_ip = re.compile('^\s*service-object\s+(?P<proto>\d+)', re.IGNORECASE)
 # access-list acl_name extended ...
 re_isacl = re.compile('^\s*access-list\s+\S+\s+extended', re.IGNORECASE)
+
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
 
@@ -95,7 +116,9 @@ for line in f:
 	line = line.strip()
 	# Parsing and filling in the network and service objects
 	if not aclmode:
-		if re_objnet.search(line):
+		if args.html and re_hostname.search(line):
+			html_hdr(re_hostname.search(line).group('hostname'))
+		elif re_objnet.search(line):
 			newobj(netobj,re_objnet.search(line).group('obj_name'))
 		elif re_subnet.search(line):
 			curobj[curname]=netaddr.IPNetwork(re_subnet.search(line).group('ip') +
@@ -127,13 +150,23 @@ for line in f:
 			unfold(srvgrp)
 
 	if aclmode:
+		if re_aclname.search(line):
+			newacl = re_aclname.search(line).group('acl_name')
+			if not curacl == newacl:
+				curacl = newacl
+				if args.html:
+					if rulecnt: html_tbl_ftr()
+					html_tbl_hdr(curacl)
 		rulecnt += 1
 
-print 'netobj'
-pprint.pprint(netobj)
-print 'netgrp'
-pprint.pprint(netgrp)
-print 'srvgrp'
-pprint.pprint(srvgrp)
-print '\n'
-print 'total rules: ', rulecnt
+#print 'netobj'
+#pprint.pprint(netobj)
+#print 'netgrp'
+#pprint.pprint(netgrp)
+#print 'srvgrp'
+#pprint.pprint(srvgrp)
+#print '\n'
+#print 'total rules: ', rulecnt
+if args.html:
+	html_tbl_ftr()
+	html_ftr()
