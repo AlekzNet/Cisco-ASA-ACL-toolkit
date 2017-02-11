@@ -46,17 +46,21 @@ def unfold_rec(obj, objarr):
 				unfold_rec(obj, objarr)
 
 def html_hdr(title):
-	print '<html lang=en><head><title>' + title + '</title></head><body>'
+	print '<html lang=en><head><title>' + title + '</title></head><body> \
+		<h1>' + title + ' policy</h1>'
 
 def html_tbl_hdr(title):
-	print '<table><caption>' + title + '</caption><tr><th>Line #</th><th>Source</th> \
-	<th><Destination></th><th>Service</th><th>Action</th></tr>'
+	print '<table><caption id=' + title + '>' + title + '</caption> \
+	<tr><th>Line #</th><th>Source</th><th><Destination></th><th>Service</th><th>Action</th></tr>'
 
 def html_tbl_ftr():
 	print '</table>'
 
-def html_ftr():
-	print '</body></html>'
+def html_ftr(content):
+	print '<div id=content><h2>Content</h2><ul>'
+	for i in content:
+		print '<li><a href=#' + i + '>' + i + '</a> ' + content[i] + '</i>'
+	print '</ul></div></body></html>'
 
 
 parser = argparse.ArgumentParser()
@@ -73,6 +77,7 @@ srvgrp = {}	# service-groups
 aclmode = False
 rulecnt = 0 # ACL rule counter
 curacl = '' # current ACL name
+aclnames = {} # ACL names and interfaces
 # global curobj points to the current dict: netobj, netgrp or srvgrp
 # global curname points to the current object name
 # curproto points to the current protocol
@@ -108,6 +113,8 @@ re_isacl = re.compile('^\s*access-list\s+\S+\s+extended', re.IGNORECASE)
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
 
+#access-group management_acl in interface management
+re_aclgrp = re.compile('^\s*access-group\s+(?P<acl_name>\S+)\s+(?P<acl_int>.*$)', re.IGNORECASE)
 
 f=sys.stdin if "-" == args.conf else open (args.conf,"r")
 
@@ -155,10 +162,13 @@ for line in f:
 			newacl = re_aclname.search(line).group('acl_name')
 			if not curacl == newacl:
 				curacl = newacl
+				aclnames[curacl] = ''
 				if args.html:
 					if rulecnt: html_tbl_ftr()
 					html_tbl_hdr(curacl)
-		rulecnt += 1
+			rulecnt += 1
+		elif re_aclgrp.search(line):
+			aclnames[re_aclgrp.search(line).group('acl_name')] = re_aclgrp.search(line).group('acl_int')
 
 #print 'netobj'
 #pprint.pprint(netobj)
@@ -170,4 +180,4 @@ for line in f:
 #print 'total rules: ', rulecnt
 if args.html:
 	html_tbl_ftr()
-	html_ftr()
+	html_ftr(aclnames)
