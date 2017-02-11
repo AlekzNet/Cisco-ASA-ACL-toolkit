@@ -21,6 +21,30 @@ def newobj (obj, key):
 	curname=key
 	curobj[curname]=[]
 
+def un_net():
+	for obj in netgrp:
+		ub_net_rec(netgrp[obj])
+
+def ub_net_rec(net):
+	for obj in net:
+		if "object-group" in str(obj):
+				for i in netgrp[obj.split()[1]]:
+					net.append(i)
+				net.remove(obj)
+				ub_net_rec(net)
+
+def un_srv():
+	for obj in srvgrp:
+		ub_srv_rec(srvgrp[obj])
+
+
+def ub_srv_rec(srv):
+	for obj in srv:
+		if "object-group" in str(obj):
+				for i in srvgrp[obj.split()[1]]:
+					srv.append(i)
+				srv.remove(obj)
+				ub_srv_rec(srv)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('conf', default="-", nargs='?', help="Cisco ASA conf filename or \"-\" to read from the console (default)")
@@ -47,7 +71,7 @@ re_netgrp = re.compile('^\s*object-group\s+network\s+(?P<net_grp>\S+)', re.IGNOR
 # network-object 10.1.1.1 255.255.255.255
 re_netobj = re.compile('^\s*network-object\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.IGNORECASE)
 #object-group service mysrvgrp1
-re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)', re.IGNORECASE)
+re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s*$', re.IGNORECASE)
 #object-group service srv_tcp tcp
 re_srvgrp_proto = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s+(?P<proto>\S+)', re.IGNORECASE)
 # port-object eq ldaps
@@ -58,7 +82,8 @@ re_grpobj = re.compile('^\s*group-object\s+(?P<grp_obj>\S+)', re.IGNORECASE)
 re_srvobj = re.compile('^\s*service-object\s+(?P<proto>\S+)(\s+destination)?\s+(?P<service>.*$)', re.IGNORECASE)
 # service-object 97
 re_srvobj_ip = re.compile('^\s*service-object\s+(?P<proto>\d+)', re.IGNORECASE)
-
+# access-list acl_name extended ...
+re_isacl = re.compile('^\s*access-list\s+\S+\s+extended', re.IGNORECASE)
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
 
@@ -67,41 +92,41 @@ f=sys.stdin if "-" == args.conf else open (args.conf,"r")
 
 
 for line in f:
-	line = line.rstrip()
-	# Parsing and filling in network and service objects
+	line = line.strip()
+	# Parsing and filling in the network and service objects
 	if not aclmode:
 		if re_objnet.search(line):
 			newobj(netobj,re_objnet.search(line).group('obj_name'))
-		if re_subnet.search(line):
+		elif re_subnet.search(line):
 			curobj[curname]=netaddr.IPNetwork(re_subnet.search(line).group('ip') +
 				'/' + re_subnet.search(line).group('mask'))
-#			fillobj(curobj, curname, netaddr.IPNetwork(re_subnet.search(line).group('ip') +
-#				'/' + re_subnet.search(line).group('mask')))
-		if re_host.search(line):
+		elif re_host.search(line):
 			curobj[curname]=netaddr.IPNetwork(re_host.search(line).group('ip') + '/32')
-#			fillobj(curobj, curname, netaddr.IPNetwork(re_host.search(line).group('ip') + '/32'))
-		if re_netgrp.search(line):
+		elif re_netgrp.search(line):
 			newobj(netgrp,re_netgrp.search(line).group('net_grp'))
-		if re_netobj.search(line):
+		elif re_netobj.search(line):
 			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj.search(line).group('ip') +
 				'/' + re_netobj.search(line).group('mask')))
-		if re_srvgrp.search(line):
+		elif re_srvgrp.search(line):
 			newobj(srvgrp,re_srvgrp.search(line).group('srv_grp'))
-		if re_grpobj.search(line):
+		elif re_grpobj.search(line):
 			fillobj(curobj, curname, 'object-group ' + re_grpobj.search(line).group('grp_obj'))
-		if re_srvobj.search(line):
+		elif re_srvobj.search(line):
 			fillobj(curobj, curname, re_srvobj.search(line).group('proto') + ':' +
 				re_srvobj.search(line).group('service'))
-		if re_srvgrp_proto.search(line):
+		elif re_srvgrp_proto.search(line):
 			newobj(srvgrp,re_srvgrp_proto.search(line).group('srv_grp'))
 			curproto = re_srvgrp_proto.search(line).group('proto')
-		if re_portobj.search(line):
+		elif re_portobj.search(line):
 			fillobj(curobj, curname, curproto + ':' + re_portobj.search(line).group('service'))
-		if re_srvobj_ip.search(line):
+		elif re_srvobj_ip.search(line):
 			fillobj(curobj, curname, re_srvobj_ip.search(line).group('proto'))
-		if re_aclname.search(line): aclmode = True
+		elif re_isacl.search(line):
+			aclmode = True
+			un_net()
+			un_srv()
 
-	else:
+	if aclmode:
 		rulecnt += 1
 
 print 'netobj'
