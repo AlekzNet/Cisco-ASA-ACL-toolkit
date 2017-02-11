@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# ASA conf converter to sh access-list
+# ASA conf converter to sh access-list or HTML
+
 import string
 import argparse
 import re
@@ -11,40 +12,39 @@ except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
 
-
-def fillobj (obj, key, val):
-	obj[key].append(val)
-
+# If new object is found, add it to the group
+# And set the current names
 def newobj (obj, key):
 	global curobj,curname
 	curobj=obj
 	curname=key
 	curobj[curname]=[]
 
-def un_net():
-	for obj in netgrp:
-		ub_net_rec(netgrp[obj])
+# Add new services or networks to the object
+def fillobj (obj, key, val):
+	obj[key].append(val)
 
-def ub_net_rec(net):
-	for obj in net:
-		if "object-group" in str(obj):
-				for i in netgrp[obj.split()[1]]:
-					net.append(i)
-				net.remove(obj)
-				ub_net_rec(net)
-
-def un_srv():
-	for obj in srvgrp:
-		ub_srv_rec(srvgrp[obj])
+# Iterate through all objects in netgrp or srvgrp
+def unfold(objarr):
+	for obj in objarr:
+		unfold_rec(objarr[obj],objarr)
 
 
-def ub_srv_rec(srv):
-	for obj in srv:
-		if "object-group" in str(obj):
-				for i in srvgrp[obj.split()[1]]:
-					srv.append(i)
-				srv.remove(obj)
-				ub_srv_rec(srv)
+# Ubfold all included objects
+def unfold_rec(obj, objarr):
+	for item in obj:
+		# If object-group is found,
+		# recurse through the object-groups
+		if "object-group" in str(item):
+				# Add the content of the object-group
+				# item by item
+				for i in objarr[item.split()[1]]:
+					obj.append(i)
+				# Remove the object-group
+				obj.remove(item)
+				# and dive into the new updated object
+				unfold_rec(obj, objarr)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('conf', default="-", nargs='?', help="Cisco ASA conf filename or \"-\" to read from the console (default)")
@@ -123,8 +123,8 @@ for line in f:
 			fillobj(curobj, curname, re_srvobj_ip.search(line).group('proto'))
 		elif re_isacl.search(line):
 			aclmode = True
-			un_net()
-			un_srv()
+			unfold(netgrp)
+			unfold(srvgrp)
 
 	if aclmode:
 		rulecnt += 1
