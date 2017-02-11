@@ -49,7 +49,7 @@ def html_hdr(title):
 	print '<html lang=en><head><title>' + title + '</title></head><body>'
 
 def html_tbl_hdr(title):
-	print '<table><caption>' + title + '<tr><th>Line #</th><th>Source</th> \
+	print '<table><caption>' + title + '</caption><tr><th>Line #</th><th>Source</th> \
 	<th><Destination></th><th>Service</th><th>Action</th></tr>'
 
 def html_tbl_ftr():
@@ -149,6 +149,7 @@ for line in f:
 			unfold(netgrp)
 			unfold(srvgrp)
 
+	# Parsing access-lists
 	if aclmode:
 		if re_aclname.search(line):
 			newacl = re_aclname.search(line).group('acl_name')
