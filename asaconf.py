@@ -8,7 +8,7 @@ import string
 import argparse
 import re
 import sys
-#import pprint
+import pprint
 try:
 	import netaddr
 except ImportError:
@@ -97,7 +97,7 @@ class Rule:
 		self.parse()
 
 	def cleanup(self):
-		self.line=re.sub(r'\s+log.*$','',self.line)
+		self.line=re.sub(r'\s+log$|\s+log\s+.*$','',self.line)
 		self.line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',self.line)
 
 	def parse(self):
@@ -219,6 +219,8 @@ re_host = re.compile('^\s*host\s+(?P<ip>\S+)', re.IGNORECASE)
 re_netgrp = re.compile('^\s*object-group\s+network\s+(?P<net_grp>\S+)', re.IGNORECASE)
 # network-object 10.1.1.1 255.255.255.255
 re_netobj = re.compile('^\s*network-object\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.IGNORECASE)
+#network-object host 10.1.1.1
+re_netobj_host = re.compile('^\s*network-object\s+host\s+(?P<ip>\S+)', re.IGNORECASE)
 #object-group service mysrvgrp1
 re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s*$', re.IGNORECASE)
 #object-group service srv_tcp tcp
@@ -259,6 +261,8 @@ for line in f:
 			curobj[curname]=netaddr.IPNetwork(re_host.search(line).group('ip') + '/32')
 		elif re_netgrp.search(line):
 			newobj(netgrp,re_netgrp.search(line).group('net_grp'))
+		elif re_netobj_host.search(line):
+			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj_host.search(line).group('ip') + '/32'))
 		elif re_netobj.search(line):
 			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj.search(line).group('ip') +
 				'/' + re_netobj.search(line).group('mask')))
