@@ -35,19 +35,22 @@ def unfold(objarr):
 
 
 # Unfold all included objects
-def unfold_rec(obj, objarr):
-	for item in obj:
+def unfold_rec(obj, objarr,index=0):
+	# We are starting with the index from the previous iteration
+	for i in range(index, len(obj)):
+		item=obj[i]
 		# If object-group is found,
 		# recurse through the object-groups
 		if "object-group" in str(item):
 				# Add the content of the object-group
 				# item by item
-				for i in objarr[item.split()[1]]:
-					obj.append(i)
-				# Remove the object-group
-				obj.remove(item)
+				for j in objarr[item.split()[1]]:
+					obj.append(j)
+				# Remove the item with object-group
+				del obj[i]
 				# and dive into the new updated object
-				unfold_rec(obj, objarr)
+				# We are passing the index we are currently on
+				unfold_rec(obj,objarr,i)
 
 def html_hdr(title):
 	print '<html lang=en><head><title>' + title + '</title></head><body> <style> \
@@ -143,6 +146,7 @@ class Rule:
 			else:
 				self.dst = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
 			del arr[0:2]
+			# Services
 			if len(arr) > 0:
 				if 'object-group' in arr[0]:
 					self.srv = srvgrp[arr[1]]
