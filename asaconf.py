@@ -115,7 +115,7 @@ class Rule:
 			if 'object-group' in arr[0]:
 				self.src = netgrp[arr[1]]
 			elif 'object' in arr[0]:
-				self.src = netobj[arr[1]]
+				self.src = [netobj[arr[1]]]
 			elif 'host' in arr[0]:
 				self.src = [netaddr.IPNetwork(arr[1] + '/32')]
 			else:
@@ -125,7 +125,7 @@ class Rule:
 			if 'object-group' in arr[0]:
 				self.dst = netgrp[arr[1]]
 			elif 'object' in arr[0]:
-				self.dst = netobj[arr[1]]
+				self.dst = [netobj[arr[1]]]
 			elif 'host' in arr[0]:
 				self.dst = [netaddr.IPNetwork(arr[1] + '/32')]
 			else:
