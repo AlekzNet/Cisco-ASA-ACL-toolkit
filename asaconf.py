@@ -28,6 +28,7 @@ def fillobj (obj, key, val):
 def unfold(objarr):
 	for obj in objarr:
 		unfold_rec(objarr[obj],objarr)
+		if objarr is netgrp: objarr[obj] = netaddr.cidr_merge(objarr[obj])
 
 
 # Unfold all included objects
@@ -88,17 +89,47 @@ class Rule:
 		self.line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',self.line)
 
 	def parse(self):
-		#Remarked ACL
 		if Rule.re_acl_rem.search(self.line):
+			# Found Remarked ACL
+			# Was the prev rule also remarked? Ifyes, add <br>
 			if Rule.remark: Rule.remark += '<br />'
 			Rule.remark += Rule.re_acl_rem.search(line).group('acl_rem')
 		else:
+			# Clean the remarks
 			self.rem = Rule.remark
 			Rule.remark = ''
 			arr=self.line.split()
+			# ACL name
 			self.name = arr[1]
+			# Permit or deny
 			self.action = arr[3]
 			del arr[0:4]
+			if 'object-group' in arr[0]:
+				self.srv = srvgrp[arr[1]]
+				del arr[0:2]
+			else:
+				self.proto = arr[0]
+				del arr[0]
+			# Source
+			if 'object-group' in arr[0]:
+				self.src = netgrp[arr[1]]
+			elif 'object' in arr[0]:
+				self.src = netobj[arr[1]]
+			elif 'host' in arr[0]:
+				self.src = [netaddr.IPNetwork(arr[1] + '/32')]
+			else:
+				self.src = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
+			del arr[0:2]
+			# Destination
+			if 'object-group' in arr[0]:
+				self.dst = netgrp[arr[1]]
+			elif 'object' in arr[0]:
+				self.dst = netobj[arr[1]]
+			elif 'host' in arr[0]:
+				self.dst = [netaddr.IPNetwork(arr[1] + '/32')]
+			else:
+				self.dst = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
+			del arr[0:2]
 
 
 	def rprint(self):
