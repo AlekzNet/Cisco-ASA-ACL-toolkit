@@ -48,7 +48,8 @@ def unfold_rec(obj, objarr):
 
 def html_hdr(title):
 	print '<html lang=en><head><title>' + title + '</title></head><body> \
-		<style>table {color: #000080; font-size: 12px; border: solid 1px #000080; border-collapse: collapse;} </style> \
+		<style>table {color: #000080; font-size: 12px; border: solid 1px #000080; \
+		border-collapse: collapse; } td {padding: 5px; } </style> \
 		<h1>' + title + ' policy</h1>'
 
 def html_tbl_hdr(title):
