@@ -86,7 +86,7 @@ class Rule:
 		self.parse()
 
 	def cleanup(self):
-		self.line=re.sub(r'\s+log .*$','',self.line)
+		self.line=re.sub(r'\s+log.*$','',self.line)
 		self.line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',self.line)
 
 	def parse(self):
