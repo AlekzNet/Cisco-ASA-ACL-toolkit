@@ -47,11 +47,12 @@ def unfold_rec(obj, objarr):
 
 def html_hdr(title):
 	print '<html lang=en><head><title>' + title + '</title></head><body> \
+		<style>table {color: #000080; font-size: 12px; border: solid 1px #000080; border-collapse: collapse;} </style> \
 		<h1>' + title + ' policy</h1>'
 
 def html_tbl_hdr(title):
-	print '<table><caption id=' + title + '>' + title + '</caption> \
-	<tr><th>Line #</th><th>Source</th><th><Destination></th><th>Service</th><th>Action</th></tr>'
+	print '<table border=1><caption id=' + title + '>' + title + '</caption> \
+	<tr><th>Line #</th><th>Source</th><th>Destination</th><th>Service</th><th>Action</th></tr>'
 
 def html_tbl_ftr():
 	print '</table>'
@@ -62,6 +63,59 @@ def html_ftr(content):
 		print '<li><a href=#' + i + '>' + i + '</a> ' + content[i] + '</i>'
 	print '</ul></div></body></html>'
 
+
+class Rule:
+	'Class for an ACL rule'
+	#access-list myacl remark My best rule
+	re_acl_rem = re.compile('^\s*access-list\s+\S+\s+remark\s+(?P<acl_rem>.*$)', re.IGNORECASE)
+	remark = ''
+
+	def __init__(self,lnum,line):
+		self.lnum = lnum
+		self.line=line
+		self.name = ''
+		self.src = []
+		self.dst = []
+		self.srv = []
+		self.proto = []
+		self.action = ''
+		self.rem = ''
+		self.cleanup()
+		self.parse()
+
+	def cleanup(self):
+		self.line=re.sub(r'\s+log .*$','',self.line)
+		self.line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',self.line)
+
+	def parse(self):
+		#Remarked ACL
+		if Rule.re_acl_rem.search(self.line):
+			if Rule.remark: Rule.remark += '<br />'
+			Rule.remark += Rule.re_acl_rem.search(line).group('acl_rem')
+		else:
+			self.rem = Rule.remark
+			Rule.remark = ''
+			arr=self.line.split()
+			self.name = arr[1]
+			self.action = arr[3]
+			del arr[0:4]
+
+
+	def rprint(self):
+		if not Rule.remark:
+			print 'access-list ' + self.name + ' line ' + str(self.lnum) + ' extended ' + \
+				' '.join([self.action, str(self.proto), str(self.src), str(self.dst), str(self.srv)])
+			self.rem = ''
+
+	def html(self):
+		if not Rule.remark:
+			if self.rem:
+				print '<tr><td colspan=5>' + self.rem + '</td></tr>'
+			print '<tr><td>' + str(self.lnum) + '</td>' + self.html_obj(self.src) + \
+				self.html_obj(self.dst) + self.html_obj(self.srv) + '<td>' + self.action + '</td></tr>'
+
+	def html_obj(self,obj):
+		return '<td>' + '<br />'.join(map(lambda x: str(x), obj)) + '</td>'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('conf', default="-", nargs='?', help="Cisco ASA conf filename or \"-\" to read from the console (default)")
@@ -112,6 +166,7 @@ re_isacl = re.compile('^\s*access-list\s+\S+\s+extended', re.IGNORECASE)
 
 #access-list name
 re_aclname = re.compile('^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
+
 
 #access-group management_acl in interface management
 re_aclgrp = re.compile('^\s*access-group\s+(?P<acl_name>\S+)\s+(?P<acl_int>.*$)', re.IGNORECASE)
@@ -166,7 +221,12 @@ for line in f:
 				if args.html:
 					if rulecnt: html_tbl_ftr()
 					html_tbl_hdr(curacl)
+				rulecnt = 1
+			r=Rule(rulecnt,line)
+			if args.html: r.html()
+			else: r.rprint()
 			rulecnt += 1
+		#Assign interfaces and directions to the corresponfing access-groups
 		elif re_aclgrp.search(line):
 			aclnames[re_aclgrp.search(line).group('acl_name')] = re_aclgrp.search(line).group('acl_int')
 
