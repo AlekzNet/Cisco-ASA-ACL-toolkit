@@ -78,7 +78,7 @@ class Rule:
 		self.src = []
 		self.dst = []
 		self.srv = []
-		self.proto = []
+		self.proto = ''
 		self.action = ''
 		self.rem = ''
 		self.cleanup()
@@ -130,6 +130,12 @@ class Rule:
 			else:
 				self.dst = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
 			del arr[0:2]
+			if len(arr) > 0:
+				if 'object-group' in arr[0]:
+					self.srv = srvgrp[arr[1]]
+				else:
+					self.srv = [self.proto + ':' + ' '.join(arr[:])]
+			else: self.srv = [self.proto]
 
 
 	def rprint(self):
