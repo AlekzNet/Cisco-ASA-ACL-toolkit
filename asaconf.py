@@ -8,7 +8,7 @@ import string
 import argparse
 import re
 import sys
-import pprint
+#import pprint
 try:
 	import netaddr
 except ImportError:
@@ -31,7 +31,7 @@ def fillobj (obj, key, val):
 def unfold(objarr):
 	for obj in objarr:
 		unfold_rec(objarr[obj],objarr)
-		if objarr is netgrp: objarr[obj] = netaddr.cidr_merge(objarr[obj])
+		if not args.noaggr and objarr is netgrp: objarr[obj] = netaddr.cidr_merge(objarr[obj])
 
 
 # Unfold all included objects
@@ -191,6 +191,7 @@ parser.add_argument('conf', default="-", nargs='?', help="Cisco ASA conf filenam
 out = parser.add_mutually_exclusive_group()
 out.add_argument('--html', default=True, help="Cisco policy to HTML", action="store_true")
 out.add_argument('--acl', default=False, help="Cisco policy to sh access-list", action="store_true")
+parser.add_argument('--noaggr', default=False, help="Do not aggregate networks", action="store_true")
 args = parser.parse_args()
 if args.acl: args.html=False
 
@@ -299,14 +300,6 @@ for line in f:
 		elif re_aclgrp.search(line):
 			aclnames[re_aclgrp.search(line).group('acl_name')] = re_aclgrp.search(line).group('acl_int')
 
-#print 'netobj'
-#pprint.pprint(netobj)
-#print 'netgrp'
-#pprint.pprint(netgrp)
-#print 'srvgrp'
-#pprint.pprint(srvgrp)
-#print '\n'
-#print 'total rules: ', rulecnt
 if args.html:
 	html_tbl_ftr()
 	html_ftr(aclnames)
