@@ -47,17 +47,22 @@ def unfold_rec(obj, objarr):
 				unfold_rec(obj, objarr)
 
 def html_hdr(title):
-	print '<html lang=en><head><title>' + title + '</title></head><body> \
-		<style>table {color: #000080; font-size: 12px; border: solid 1px #000080; \
-		border-collapse: collapse; } td {padding: 5px; } </style> \
-		<h1>' + title + ' policy</h1>'
+	print '<html lang=en><head><title>' + title + '</title></head><body> <style> \
+		body {background: #FFF5DD; color: #000080; font-family: sans-serif; padding-left: 20px; } \
+		table {color: #000080; font-size: 0.8em; border: solid 1px #000080; border-collapse: collapse; } \
+		th { font-size: 1em; padding: 0.8em; }\
+		td {padding-left: 15px; padding-top: 5px; padding-bottom: 5px; padding-right: 15px;} \
+		a {color: #0000d0; text-decoration: none;} \
+		.permit {color: DarkGreen;} \
+		.deny {color: DarkRed;} </style> \
+		<h1>' + title + ' policy</h1><h4><a href=#content>Content</a></h4>'
 
 def html_tbl_hdr(title):
-	print '<table border=1><caption id=' + title + '>' + title + '</caption> \
+	print '<table border=1><caption id=' + title + '><h2>' + title + '</h2></caption> \
 	<tr><th>Line #</th><th>Source</th><th>Destination</th><th>Service</th><th>Action</th></tr>'
 
 def html_tbl_ftr():
-	print '</table>'
+	print '</table><br /><br />'
 
 def html_ftr(content):
 	print '<div id=content><h2>Content</h2><ul>'
@@ -149,8 +154,13 @@ class Rule:
 		if not Rule.remark:
 			if self.rem:
 				print '<tr><td colspan=5>' + self.rem + '</td></tr>'
+#			print self.action
 			print '<tr><td>' + str(self.lnum) + '</td>' + self.html_obj(self.src) + \
-				self.html_obj(self.dst) + self.html_obj(self.srv) + '<td>' + self.action + '</td></tr>'
+				self.html_obj(self.dst) + self.html_obj(self.srv) + '<td>' + self.html_color_action(self.action) + '</td></tr>'
+
+	def html_color_action(self, act):
+		if 'permit' in act: return '<span class=permit>' + act + '</span>'
+		else: return '<span class=deny>' + act + '</span>'
 
 	def html_obj(self,obj):
 		return '<td>' + '<br />'.join(map(lambda x: str(x), obj)) + '</td>'
