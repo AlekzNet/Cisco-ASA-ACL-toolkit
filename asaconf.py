@@ -152,13 +152,23 @@ class Rule:
 					self.srv = srvgrp[arr[1]]
 				else:
 					self.srv = [self.proto + ':' + ' '.join(arr[:])]
-			else: self.srv = [self.proto]
+			elif not self.srv:
+				self.srv = [self.proto]
 
 
 	def rprint(self):
 		if not Rule.remark:
-			print 'access-list ' + self.name + ' line ' + str(self.lnum) + ' extended ' + \
-				' '.join([self.action, str(self.proto), str(self.src), str(self.dst), str(self.srv)])
+			for src in self.src:
+				for dst in self.dst:
+					for srv in self.srv:
+						if ":" in srv:
+							proto,ports= srv.split(":")
+						else:
+							proto=srv
+							ports=''
+
+						print 'access-list ' + self.name + ' line ' + str(self.lnum) + ' extended ' + \
+				' '.join([self.action, proto, str(src.ip), str(src.netmask), str(dst.ip), str(dst.netmask), ports])
 			self.rem = ''
 
 	def html(self):
