@@ -1,5 +1,8 @@
 #!/usr/bin/python
 # ASA conf converter to sh access-list or HTML
+# http://www.cisco.com/c/en/us/td/docs/security/asa/asa90/configuration/guide/asa_90_cli_config/acl_extended.html
+# http://www.cisco.com/c/en/us/td/docs/security/asa/asa90/configuration/guide/asa_90_cli_config/acl_objects.html
+# http://www.cisco.com/c/en/us/td/docs/security/asa/asa90/configuration/guide/asa_90_cli_config/ref_ports.html
 
 import string
 import argparse
@@ -126,6 +129,10 @@ class Rule:
 			else:
 				self.src = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
 			del arr[0:2]
+			# Source ports are not supported
+			if "range" in arr[0]: del arr[0:3]
+			if "eq" in arr[0] or "lt" in arr[0] or "gt" in arr[0] or "neq" in arr[0]:
+				del arr[0:2]
 			# Destination
 			if 'object-group' in arr[0]:
 				self.dst = netgrp[arr[1]]
