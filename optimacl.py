@@ -44,7 +44,7 @@ def srvadd(port,arr):
 		arr.append(int(port))
 
 # Sort all ports, remove duplicates, and group in continuous ranges
-# Explanation how it works here:
+# The explanation how it works is here:
 # http://stackoverflow.com/questions/2154249/identify-groups-of-continuous-numbers-in-a-list
 # https://docs.python.org/2.6/library/itertools.html#examples
 def squeeze(arr):
@@ -168,7 +168,8 @@ if args.group:
 		print net,",".join(policy[net])
 #	CIDR /xx notation
 #	print ",".join(map(lambda x: str(x),star_nets)),"*"
-	print ",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),star_nets)),"*"
+	if len(star_nets):
+		print ",".join(map(lambda x: str(x.ip)+"/"+str(x.netmask),star_nets)),"*"
 
 else:
 	# CIDR-merging IPNetworks, corresponding to the service
