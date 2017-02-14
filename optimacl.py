@@ -27,7 +27,7 @@ def check_line():
 	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
 	if not line.count(" ") == 2:
 		print >>sys.stderr, line
-		print >>sys.stderr, "Too less or too many parameters. Expected: network mask proto:port"
+		print >>sys.stderr, "Too few or too many parameters. Expected: network mask proto:port"
 		sys.exit(1)
 
 # Range (port1-port2) to range (port1, port+1, ... port2)

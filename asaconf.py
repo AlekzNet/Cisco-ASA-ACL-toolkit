@@ -81,6 +81,8 @@ class Rule:
 	'Class for an ACL rule'
 	#access-list myacl remark My best rule
 	re_acl_rem = re.compile('^\s*access-list\s+\S+\s+remark\s+(?P<acl_rem>.*$)', re.IGNORECASE)
+
+	#All subsequent remarks are concatenated in this persistent variable
 	remark = ''
 
 	def __init__(self,lnum,line):
@@ -96,6 +98,7 @@ class Rule:
 		self.cleanup()
 		self.parse()
 
+	# Simple clean-up
 	def cleanup(self):
 		self.line=re.sub(r'\s+log$|\s+log\s+.*$','',self.line)
 		self.line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',self.line)
@@ -103,7 +106,7 @@ class Rule:
 	def parse(self):
 		if Rule.re_acl_rem.search(self.line):
 			# Found Remarked ACL
-			# Was the prev rule also remarked? Ifyes, add <br>
+			# Was the prev rule also remarked? If yes, add <br>
 			if Rule.remark: Rule.remark += '<br />'
 			Rule.remark += Rule.re_acl_rem.search(line).group('acl_rem')
 		else:
@@ -155,34 +158,32 @@ class Rule:
 			elif not self.srv:
 				self.srv = [self.proto]
 
-
+	# Print rule in the sh access-list format
 	def rprint(self):
 		if not Rule.remark:
 			for src in self.src:
 				for dst in self.dst:
 					for srv in self.srv:
-						if ":" in srv:
-							proto,ports= srv.split(":")
-						else:
-							proto=srv
-							ports=''
-
+						proto,ports= srv.split(":") if ":" in srv else [srv,'']
 						print 'access-list ' + self.name + ' line ' + str(self.lnum) + ' extended ' + \
 				' '.join([self.action, proto, str(src.ip), str(src.netmask), str(dst.ip), str(dst.netmask), ports])
 			self.rem = ''
 
+	# Print rule as an HTML table row
 	def html(self):
 		if not Rule.remark:
+			# Are there accumulated comments?
 			if self.rem:
 				print '<tr><td colspan=5>' + self.rem + '</td></tr>'
-#			print self.action
 			print '<tr><td>' + str(self.lnum) + '</td>' + self.html_obj(self.src) + \
 				self.html_obj(self.dst) + self.html_obj(self.srv) + '<td>' + self.html_color_action(self.action) + '</td></tr>'
 
+	# Highlight the action in green or red
 	def html_color_action(self, act):
 		if 'permit' in act: return '<span class=permit>' + act + '</span>'
 		else: return '<span class=deny>' + act + '</span>'
 
+	# Print out the content of the object-group with <br /> in between
 	def html_obj(self,obj):
 		return '<td>' + '<br />'.join(map(lambda x: str(x), obj)) + '</td>'
 
