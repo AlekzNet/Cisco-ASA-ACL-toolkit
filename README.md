@@ -73,7 +73,7 @@ For all permitted source addresses in test.acl create an optimized policy
 $ wc -l test.acl
      118 test.acl
 
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s "object-group myObject" --acl new_acl
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s myObject --acl new_acl
 
 access-list new_acl extended permit udp object-group myObject 10.3.10.0 255.255.255.0 gt 30000
 access-list new_acl extended permit tcp object-group myObject 10.7.8.0 255.255.255.0 range 1200 1351
@@ -89,7 +89,7 @@ access-list new_acl extended permit ip object-group myObject 10.3.8.4 255.255.25
 access-list new_acl extended permit ip object-group myObject 10.3.9.4 255.255.255.254 
 access-list new_acl extended permit ip object-group myObject 10.4.0.0 255.254.0.0 
 
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s "object-group myObject" --acl new_acl | wc -l
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s myObject --acl new_acl | wc -l
       13
 
 $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group      
