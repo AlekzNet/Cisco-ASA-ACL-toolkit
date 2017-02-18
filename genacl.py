@@ -13,7 +13,6 @@ except ImportError:
 	sys.exit(1)
 
 
-
 def addr_form(addr):
 	if "any" in addr or "0.0.0.0 0.0.0.0" in addr or "0.0.0.0/0" in addr:
 		return "any"
@@ -26,7 +25,10 @@ def addr_form(addr):
 	elif re.match(r'^\w',addr):
 		return "object-group "+addr
 	else:
-		quit("Unknown format or the address " +addr)
+		print >>sys.stderr, "Unknown format or the address " +addr
+		sys.exit(1)
+
+
 
 class Policy:
 	'Class for the whole policy'
@@ -81,7 +83,10 @@ class PRule(Policy):
 		else:
 			return ''
 
+
 	def parse(self):
+		global address
+
 		arr=line.split()
 		if len(arr) <= 3 and not (args.src or args.dst):
 			print >>sys.stderr, line
@@ -109,7 +114,7 @@ class PRule(Policy):
 				# arr[0] - destIP
 				# arr[1] - dest mask
 				# arr[2] - service
-				self.src = args.src
+				self.src = address
 				self.dst = ' '.join(arr[0:2])
 				self.proto = self.protocol(arr[2])
 				self.srv = self.port(arr[2])
@@ -119,7 +124,7 @@ class PRule(Policy):
 				# arr[1] - source mask
 				# arr[2] - service
 				self.src = ' '.join(arr[0:2])
-				self.dst = args.dst
+				self.dst = address
 				self.proto = self.protocol(arr[2])
 				self.srv = self.port(arr[2])
 				self.action = 'permit' if not args.deny else 'deny'
@@ -140,8 +145,6 @@ parser.add_argument('--deny', help="Use deny by default instead of permit", acti
 parser.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name, default=Test_ACL")
 parser.add_argument('--dev', default="asa", help="Type of device. Default - asa")
 args = parser.parse_args()
-
-
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
