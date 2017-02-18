@@ -4,16 +4,13 @@ import string
 import argparse
 import re
 import sys
-import pprint
+#import pprint
 
 try:
 	import netaddr
 except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
-
-
-
 
 
 def cidr2str(addr):
@@ -37,14 +34,9 @@ class PRule(Policy):
 	'Class for a rule prototype'
 
 	def __init__(self,line):
-		self.line=self.cleanup(line)
+		self.line=line.strip()
 		self.name = args.acl
 		self.parse()
-
-	# Simple clean-up
-	def cleanup(self,line):
-		# Replace any with 0/0
-		return re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line.strip())
 
 	def protocol(self,service):
 		if "*" in service:
@@ -135,7 +127,6 @@ class PRule(Policy):
 			self.dst = self.parse_addr_args(args.dst)
 
 	def rprint(self):
-#		pprint.pprint(self.line, self.src, self.dst, self.proto, self.srv, self.action)
 		if 'asa' in self.getdev(): self.asaout()
 
 	def asaout(self):
@@ -152,14 +143,6 @@ parser.add_argument('--dev', default="asa", help="Type of device. Default - asa"
 args = parser.parse_args()
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
-
-#if args.src:
-	#address = args.src
-#elif args.dst:
-	#address = args.dst
-#else:
-	#address = "any"
-#address = addr_form(address)
 
 policy = Policy(args.dev)
 
