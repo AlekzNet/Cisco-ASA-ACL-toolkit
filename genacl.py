@@ -13,22 +13,12 @@ except ImportError:
 	sys.exit(1)
 
 
-def addr_form(addr):
-	if "any" in addr or "0.0.0.0 0.0.0.0" in addr or "0.0.0.0/0" in addr:
-		return "any"
-	elif re.match(r'^\d',addr):
-		tmp=netaddr.IPNetwork(addr.replace(" ","/"))
-		if '255.255.255.255' in str(tmp.netmask):
-			return "host "+str(tmp.ip)
-		else:
-			return str(tmp.ip) + " " + str(tmp.netmask)
-	elif re.match(r'^\w',addr):
-		return "object-group "+addr
-	else:
-		print >>sys.stderr, "Unknown format or the address " +addr
-		sys.exit(1)
 
 
+
+def cidr2str(addr):
+	tmp = netaddr.IPNetwork(addr)
+	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
 class Policy:
 	'Class for the whole policy'
@@ -83,51 +73,67 @@ class PRule(Policy):
 		else:
 			return ''
 
+	def check_arr(self,arr):
+		if not len(arr):
+			print >>sys.stderr, self.line
+			print >>sys.stderr, "Too few fields in the policy."
+			sys.exit(1)
+
+	def parse_addr(self,arr):
+		if 'any' in  arr[0]:
+			addr=arr[0]
+			del arr[0]
+		elif 'host' in arr[0]:
+			addr=arr[1]
+			del arr[0:2]
+		elif not ',' in arr[0]:
+			if '/' in arr[0]:
+				addr = cidr2str(arr[0])
+				del arr[0]
+			else:
+				addr = ' '.join(arr[0:2])
+				del arr[0:2]
+		return addr
+
+	def parse_addr_args(self,addr):
+		if '/' in addr:
+			return cidr2str(addr)
+		elif re.match(r'^\w',addr):
+			return "object-group "+addr
+		else: return addr
 
 	def parse(self):
-		global address
+
+		addr1=''
+		addr2=''
 
 		arr=line.split()
-		if len(arr) <= 3 and not (args.src or args.dst):
-			print >>sys.stderr, line
-			print >>sys.stderr, "Too few fields. Specify either the source or destination IP-address/netmask or object name"
-			sys.exit(1)
-		elif len(arr) <= 2:
-			print >>sys.stderr, line
-			print >>sys.stderr, "Too few fields in the policy. There must be 3 or more"
-			sys.exit(1)
 
-		if len(arr) >= 5:
-			# arr[0] - sourceIP
-			# arr[1] - source mask
-			# arr[2] - destIP
-			# arr[3] - dest mask
-			# arr[4] - service
-			# arr[5] - action
-			self.src = ' '.join(arr[0:2])
-			self.dst = ' '.join(arr[2:4])
-			self.proto = self.protocol(arr[4])
-			self.srv = self.port(arr[4])
-			self.action = 'permit' if len(arr) == 5  else arr[5]
-		else:
-			if args.src:
-				# arr[0] - destIP
-				# arr[1] - dest mask
-				# arr[2] - service
-				self.src = address
-				self.dst = ' '.join(arr[0:2])
-				self.proto = self.protocol(arr[2])
-				self.srv = self.port(arr[2])
-				self.action = 'permit' if not args.deny else 'deny'
-			elif args.dst:
-				# arr[0] - sourceIP
-				# arr[1] - source mask
-				# arr[2] - service
-				self.src = ' '.join(arr[0:2])
-				self.dst = address
-				self.proto = self.protocol(arr[2])
-				self.srv = self.port(arr[2])
-				self.action = 'permit' if not args.deny else 'deny'
+		addr1=self.parse_addr(arr)
+		self.check_arr(arr)
+
+		if re.match(r'^\d',arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
+			addr2=self.parse_addr(arr)
+			self.check_arr(arr)
+
+		if not ',' in arr[0]:
+			self.proto = self.protocol(arr[0])
+			self.srv = self.port(arr[0])
+			del arr[0]
+
+		if len (arr): self.action = arr[0]
+		elif not args.deny: self.action = 'permit'
+		else: self.action = 'deny'
+
+		if addr2:
+			self.src = addr1
+			self.dst = addr2
+		elif args.src:
+			self.src = self.parse_addr_args(args.src)
+			self.dst = addr1
+		elif args.dst:
+			self.src = addr1
+			self.dst = self.parse_addr_args(args.dst)
 
 	def rprint(self):
 #		pprint.pprint(self.line, self.src, self.dst, self.proto, self.srv, self.action)
@@ -148,13 +154,13 @@ args = parser.parse_args()
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
-if args.src:
-	address = args.src
-elif args.dst:
-	address = args.dst
-else:
-	address = "any"
-address = addr_form(address)
+#if args.src:
+	#address = args.src
+#elif args.dst:
+	#address = args.dst
+#else:
+	#address = "any"
+#address = addr_form(address)
 
 policy = Policy(args.dev)
 
