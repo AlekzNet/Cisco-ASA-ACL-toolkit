@@ -83,9 +83,6 @@ class PRule(Policy):
 		if 'any' in  arr[0]:
 			addr=arr[0]
 			del arr[0]
-		elif 'host' in arr[0]:
-			addr=arr[1]
-			del arr[0:2]
 		elif not ',' in arr[0]:
 			if '/' in arr[0]:
 				addr = cidr2str(arr[0])
@@ -98,9 +95,11 @@ class PRule(Policy):
 	def parse_addr_args(self,addr):
 		if '/' in addr:
 			return cidr2str(addr)
-		elif re.match(r'^\w',addr):
+		elif re.match(r'^\D',addr):
 			return "object-group "+addr
-		else: return addr
+		elif ' ' in addr:
+			return addr
+		else: return 'host '+addr
 
 	def parse(self):
 
