@@ -86,7 +86,7 @@ Another example:
 Let's use object "MyHosts" as the source and name the ACL "new_acl":
 
 ```txt
-genacl.py -s MyHosts --acl new_acl test-pol2.acl
+genacl.py -s "object-group MyHosts" --acl new_acl test-pol2.acl
 access-list new_acl extended permit tcp object-group MyHosts host 10.3.0.2 eq 123
 access-list new_acl extended permit tcp object-group MyHosts host 10.3.0.1 eq 123
 access-list new_acl extended permit tcp object-group MyHosts 10.3.8.4 255.255.255.254 eq 123
