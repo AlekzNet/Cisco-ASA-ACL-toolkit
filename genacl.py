@@ -21,6 +21,11 @@ def cidr2str(addr):
 class PRule:
 	'Class for a rule prototype'
 
+	re_any=re.compile('^any$', re.IGNORECASE)
+	re_dig=re.compile('^\d')
+	re_nondig=re.compile('^\D')
+
+
 	def __init__(self,line,):
 		self.line=line.strip()
 		self.parse()
@@ -74,11 +79,13 @@ class PRule:
 	def parse_addr_args(self,addr):
 		if '/' in addr:
 			return cidr2str(addr)
-		elif re.match(r'^\D',addr):
+		elif self.re_any.search(addr):
+			return 'any'
+		elif self.re_nondig.match(addr):
 			return "object-group "+addr
 		elif ' ' in addr:
 			return addr
-		else: return 'host '+addr
+		else: return addr+' 255.255.255.255'
 
 	def parse(self):
 
@@ -90,7 +97,7 @@ class PRule:
 		addr1=self.parse_addr(arr)
 		self.check_arr(arr)
 
-		if re.match(r'^\d',arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
+		if self.re_dig.match(arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
 			addr2=self.parse_addr(arr)
 			self.check_arr(arr)
 
@@ -99,7 +106,7 @@ class PRule:
 			self.srv = self.port(arr[0])
 			del arr[0]
 
-		if len (arr): self.action = arr[0]
+		if len(arr): self.action = arr[0]
 		elif not args.deny: self.action = 'permit'
 		else: self.action = 'deny'
 
