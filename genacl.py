@@ -17,25 +17,13 @@ def cidr2str(addr):
 	tmp = netaddr.IPNetwork(addr)
 	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
-class Policy:
-	'Class for the whole policy'
-	netgrp = {}	# network-groups
-	srvgrp = {}	# service-groups
-	device = '' # asa or fgt
-
-	def __init__(self,dev):
-		Policy.device = dev
-
-	def getdev(self):
-		return Policy.device
 
 
-class PRule(Policy):
+class PRule:
 	'Class for a rule prototype'
 
-	def __init__(self,line):
+	def __init__(self,line,):
 		self.line=line.strip()
-		self.name = args.acl
 		self.parse()
 
 	def protocol(self,service):
@@ -126,11 +114,66 @@ class PRule(Policy):
 			self.src = addr1
 			self.dst = self.parse_addr_args(args.dst)
 
-	def rprint(self):
-		if 'asa' in self.getdev(): self.asaout()
+class FGT():
+	'FortiGate specific class'
+	type='fgt'
+	vdom = ''
+	srcintf = ''
+	dstintf = ''
+	rulenum = 0
 
-	def asaout(self):
-		print  " ".join(["access-list", self.name, "extended", self.proto, self.src, self.dst, self.srv])
+	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000):
+		self.vdom = vdom
+		self.srcintf = srcintf
+		self.dstintf = dstintf
+		self.rulenum=10000
+
+	def upnum(self):
+		self.rulenum += 1
+
+	def rprint(self,rule):
+		print self.rulenum, self.type
+		self.rulenum += 1
+
+class ASA():
+	'ASA specific class'
+	type='asa'
+	aclname='' #ACL name
+
+	def __init__(self,aclname='Test_ACL'):
+		self.aclname=aclname
+
+	def rprint(self,rule):
+		print  " ".join(["access-list", self.aclname, "extended", rule.proto, rule.src, rule.dst, rule.srv])
+
+
+
+class Policy(PRule):
+	'Class for the whole policy'
+	netobj = {}
+	srvobj = {}
+	netgrp = {}	# network-groups
+	srvgrp = {}	# service-groups
+	policy = [] # global policy
+	device = '' # 'asa' or 'fgt'
+
+	def __init__(self,dev):
+		self.device = dev
+
+	def getdev(self):
+		return self.device
+
+	def addrule(self,rule):
+		self.policy.append(rule)
+
+	def getpol(self):
+		return self.policy
+
+	def rprint(self):
+		for rule in self.policy:
+			dev.rprint(rule)
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console")
@@ -138,14 +181,28 @@ sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or object name")
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
 parser.add_argument('--deny', help="Use deny by default instead of permit", action="store_true")
-parser.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name, default=Test_ACL")
-parser.add_argument('--dev', default="asa", help="Type of device. Default - asa")
+parser.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name for ASA. Default=Test_ACL")
+parser.add_argument('--dev', default="asa", help="Type of device: asa (default) or fgt")
+parser.add_argument('--vdom', default="root", help="VDOM name for FortiGate. Default - root")
+parser.add_argument('--si', default="any", help="Source interface for FortiGate. Default - any")
+parser.add_argument('--di', default="any", help="Destination interface for FortiGate. Default - any")
+parser.add_argument('--rn', default=10000, help="Starting rule number for FOrtigate. Default - 10000")
 args = parser.parse_args()
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
-policy = Policy(args.dev)
+if 'asa' in args.dev:
+	dev=ASA(args.acl)
+elif 'fgt' in args.dev:
+	dev=FGT(args.vdom, args.si, args.di, args.rn)
+else:
+	print >>sys.stderr, dev, "- not supported device. It should be asa (Cisco ASA) or fgt (FortiGate)"
+	sys.exit(1)
+
+policy = Policy(dev)
 
 for line in f:
 	r=PRule(line)
-	r.rprint()
+	policy.addrule(r)
+
+policy.rprint()
