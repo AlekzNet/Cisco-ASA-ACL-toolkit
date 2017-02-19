@@ -18,7 +18,6 @@ def cidr2str(addr):
 	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
 
-
 class PRule:
 	'Class for a rule prototype'
 
@@ -113,6 +112,10 @@ class PRule:
 		elif args.dst:
 			self.src = addr1
 			self.dst = self.parse_addr_args(args.dst)
+		else:
+			print >>sys.stderr, self.line
+			print >>sys.stderr, "Either too few fields or define either --src IP or --dst IP"
+			sys.exit(1)
 
 class FGT():
 	'FortiGate specific class'
@@ -188,6 +191,8 @@ parser.add_argument('--si', default="any", help="Source interface for FortiGate.
 parser.add_argument('--di', default="any", help="Destination interface for FortiGate. Default - any")
 parser.add_argument('--rn', default=10000, help="Starting rule number for FOrtigate. Default - 10000")
 args = parser.parse_args()
+
+
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
