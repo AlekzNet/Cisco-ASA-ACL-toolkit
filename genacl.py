@@ -32,13 +32,9 @@ class PRule:
 	re_dig=re.compile('^\d')
 	re_nondig=re.compile('^\D')
 
-
 	def __init__(self,line,):
 		self.line=line.strip()
 		self.parse()
-
-
-
 
 	def check_arr(self,arr):
 		if not len(arr):
@@ -52,10 +48,10 @@ class PRule:
 			del arr[0]
 		elif not ',' in arr[0]:
 			if '/' in arr[0]:
-				addr = cidr2str(arr[0])
+				addr = [cidr2str(arr[0])]
 				del arr[0]
 			else:
-				addr = ' '.join(arr[0:2])
+				addr = [' '.join(arr[0:2])]
 				del arr[0:2]
 		else:
 			addr = [cidr2str(x) for x in arr[0].split(',')]
@@ -65,14 +61,14 @@ class PRule:
 
 	def parse_addr_args(self,addr):
 		if '/' in addr:
-			return cidr2str(addr)
+			return [cidr2str(addr)]
 		elif self.re_any.search(addr):
-			return 'any'
+			return ['any']
 		elif self.re_nondig.match(addr):
-			return "object-group "+addr
+			return ["object-group "+addr]
 		elif ' ' in addr:
-			return addr
-		else: return addr+' 255.255.255.255'
+			return [addr]
+		else: return [addr+' 255.255.255.255']
 
 	def parse(self):
 
@@ -92,7 +88,7 @@ class PRule:
 		if not ',' in arr[0]:
 #			self.proto = self.protocol(arr[0])
 #			self.srv = self.port(arr[0])
-			self.srv=arr[0]
+			self.srv=[arr[0]]
 		else:
 			self.proto = ''
 			self.srv = [ x for x in arr[0].split(',')]
@@ -149,9 +145,15 @@ class FGT(FW):
 	def upnum(self):
 		self.rulenum += 1
 
-	def rprint(self,rule):
-		print self.rulenum, self.type
-		self.rulenum += 1
+	def rprint(self,policy):
+		self.fw_netobj_print(policy.netobj)
+		self.fw_srvobj_print(policy.srvobj)
+		for rule in policy.policy:
+			self.fw_rule_print(rule,self.rulenum)
+			self.rulenum += 1
+
+	def fw_rule_print(self,rule,num):
+		print num,rule.src,rule.dst,rule.srv
 
 	def fw_netobj_print(self,netobj):
 		print 'config firewall address'
@@ -164,20 +166,27 @@ class FGT(FW):
 	def fw_srvobj_print(self,srvobj):
 		print 'config firewall service custom'
 		for obj in srvobj:
-			proto,ports = obj.split(':')
-			print ' edit ' + srvobj[obj]
-			if 'udp' in proto or 'tcp' in proto:
-				print '  set protocol TCP/UDP/SCTP'
-				print '  set ' + proto + '-portrange ' + ports
-			elif 'icmp' in proto:
-				print '  set protocol ICMP'
-				if ports:
-					print '  set icmptype ' + ports
-			elif 'ip' in proto:
-				if ports:
+			if not '*' in obj:
+				# For some reason the following construction does not work
+				# proto,ports = obj.split(':') if ':' in obj else obj,''
+				if ':' in obj:	proto,ports = obj.split(':')
+				else: proto,ports = obj,''
+				print ' edit ' + srvobj[obj]
+				if 'udp' in proto or 'tcp' in proto:
+					print '  set protocol TCP/UDP/SCTP'
+					print '  set ' + proto + '-portrange ' + ports
+				elif 'icmp' in proto:
+					print '  set protocol ICMP'
+					if ports:
+						print '  set icmptype ' + ports
+				elif 'ip' in proto:
+					if ports:
+						print '  set protocol IP'
+						print '  set protocol-number ' + ports
+				else:
 					print '  set protocol IP'
-					print '  set protocol-number ' + ports
-			print ' next'
+					print '  set protocol-number ' + proto
+				print ' next'
 		print 'end'
 
 	def netobj_add(self,netobj,rule):
@@ -199,7 +208,6 @@ class FGT(FW):
 					srvobj[srv]=re.sub(':','-',srv)
 
 
-
 class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
@@ -208,8 +216,15 @@ class ASA(FW):
 	def __init__(self,aclname='Test_ACL'):
 		self.aclname=aclname
 
-	def rprint(self,rule):
-		print  " ".join(["access-list", self.aclname, "extended", self.protocol(rule.srv), rule.src, rule.dst, self.port(rule.srv)])
+	def fw_rule_print(self,rule):
+		print  " ".join(["access-list", self.aclname, "extended", self.protocol(rule.srv[0]), \
+		rule.src[0], rule.dst[0], self.port(rule.srv[0])])
+
+	def rprint(self,policy):
+#		self.fw_netobj_print(policy.netobj)
+#		self.fw_srvobj_print(policy.srvobj)
+		for rule in policy.policy:
+			self.fw_rule_print(rule)
 
 
 	def protocol(self,service):
@@ -240,8 +255,6 @@ class ASA(FW):
 			return ''
 
 
-
-
 class Policy(PRule):
 	'Class for the whole policy'
 	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-10.0.1.0_24' }
@@ -263,9 +276,14 @@ class Policy(PRule):
 	def getpol(self):
 		return self.policy
 
-	def rprint(self):
+	def get_objects(self):
 		for rule in self.policy:
-			dev.rprint(rule)
+			self.device.netobj_add(self.netobj,rule)
+			self.device.srvobj_add(self.srvobj,rule)
+
+	def rprint(self):
+		self.get_objects()
+		self.device.rprint(self)
 
 
 
