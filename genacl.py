@@ -148,12 +148,26 @@ class FGT(FW):
 	def rprint(self,policy):
 		self.fw_netobj_print(policy.netobj)
 		self.fw_srvobj_print(policy.srvobj)
-		for rule in policy.policy:
-			self.fw_rule_print(rule,self.rulenum)
-			self.rulenum += 1
+		self.fw_rules_print(policy)
 
-	def fw_rule_print(self,rule,num):
-		print num,rule.src,rule.dst,rule.srv
+	def fw_rules_print(self,policy):
+		print 'config firewall policy'
+		for rule in policy.policy:
+			print ' edit ' + str(self.rulenum)
+			print '  set srcintf ' + self.srcintf
+			print '  set dstintf ' + self.dstintf
+			print '  set srcaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.src))
+			print '  set dstaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.dst))
+			print '  set service ' + ' '.join(map(lambda x: policy.srvobj[x], rule.srv))
+			print '  set schedule always'
+			print '  set status enable'
+			if 'permit' in rule.action:
+				print '  set action accept'
+			else:
+				print '  set action deny'
+			self.rulenum += 1
+			print ' next'
+		print 'end'
 
 	def fw_netobj_print(self,netobj):
 		print 'config firewall address'
