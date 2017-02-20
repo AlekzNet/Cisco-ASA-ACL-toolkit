@@ -30,7 +30,7 @@ pip install netaddr
 
 IPv6, NAT, source ports and multiple contexts are not supported.
 
-## Collecting data
+## Data collecting
 
 * Edit asa.list and place a list of the firewall IP-addresses and firewall hostnames (as in the ASA config). No empty lines.
 * Enter username/passwords in asa.sh, or uncomment lines that take the info from the keyboard
