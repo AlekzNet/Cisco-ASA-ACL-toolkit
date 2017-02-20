@@ -28,7 +28,7 @@ pip install netaddr
 ```
 ## Limitations
 
-IPv6, NAT, source ports and contexts are not supported.
+IPv6, NAT, source ports and multiple contexts are not supported.
 
 ## Collecting data
 
