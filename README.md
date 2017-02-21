@@ -121,7 +121,7 @@ access-list new_acl extended permit ip 10.0.0.0 255.0.0.0 host 10.3.8.4
 
 ```
 
-Generate a FortiGate policy from all ACL's that permit traffic from 10.0.0.1:
+Generate a FortiGate policy from all Cisco ASA ACL's that permit traffic from 10.0.0.1:
 
 ```txt
 $ ipaclmatch.py -t -s -a 10.0.0.1 --permit test.acl | optimacl.py --group | genacl.py -s 10.0.0.1 --dev fgt
