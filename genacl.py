@@ -136,6 +136,10 @@ class FGT(FW):
 	dstintf = ''
 	rulenum = 0
 
+	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
+
+
+
 	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000):
 		self.vdom = vdom
 		self.srcintf = srcintf
@@ -152,6 +156,7 @@ class FGT(FW):
 
 	def fw_rules_print(self,policy):
 		print 'config firewall policy'
+		policy.srvobj.update(self.predefsvc)
 		for rule in policy.policy:
 			print ' edit ' + str(self.rulenum)
 			print '  set srcintf ' + self.srcintf
@@ -206,16 +211,16 @@ class FGT(FW):
 	def netobj_add(self,netobj,rule):
 		for addrs in rule.src,rule.dst:
 			# Convert a single IP-address to a list
-			if not type(addrs) is list: addrs=[addrs]
+#			if not type(addrs) is list: addrs=[addrs]
 			for addr in addrs:
 				if addr not in netobj:
 					netobj[addr] = net2name(addr)
 
 	def srvobj_add(self,srvobj,rule):
 		services = rule.srv
-		if not type(services) is list: services=[services]
+#		if not type(services) is list: services=[services]
 		for srv in services:
-			if srv not in srvobj:
+			if srv not in srvobj and srv not in self.predefsvc:
 				if '*' in srv:
 					srvobj[srv] = 'ALL'
 				else:
