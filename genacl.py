@@ -150,9 +150,19 @@ class FGT(FW):
 		self.rulenum += 1
 
 	def rprint(self,policy):
+		if self.vdom:
+			self.fw_header_print()
 		self.fw_netobj_print(policy.netobj)
 		self.fw_srvobj_print(policy.srvobj)
 		self.fw_rules_print(policy)
+		self.fw_footer_print()
+
+	def fw_header_print(self):
+		print 'config vdom'
+		print 'edit ' + self.vdom
+
+	def fw_footer_print(self):
+		print 'end'
 
 	def fw_rules_print(self,policy):
 		print 'config firewall policy'
