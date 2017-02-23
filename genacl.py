@@ -142,11 +142,12 @@ class FGT(FW):
 
 
 
-	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000):
+	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000, label=''):
 		self.vdom = vdom
 		self.srcintf = srcintf
 		self.dstintf = dstintf
-		self.rulenum=10000
+		self.rulenum=rulenum
+		self.label=label
 
 	def upnum(self):
 		self.rulenum += 1
@@ -160,8 +161,9 @@ class FGT(FW):
 		self.fw_footer_print()
 
 	def fw_header_print(self):
-		print 'config vdom'
-		print 'edit ' + self.vdom
+		if self.vdom:
+			print 'config vdom'
+			print 'edit ' + self.vdom
 
 	def fw_footer_print(self):
 		print 'end'
@@ -182,6 +184,8 @@ class FGT(FW):
 				print '  set action accept'
 			else:
 				print '  set action deny'
+			if self.label:
+				print '  set global-label "' + self.label + '"'
 			self.rulenum += 1
 			print ' next'
 		print 'end'
@@ -327,11 +331,12 @@ sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or 
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
 parser.add_argument('--deny', help="Use deny by default instead of permit", action="store_true")
 parser.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name for ASA. Default=Test_ACL")
-parser.add_argument('--dev', default="asa", help="Type of device: asa (default) or fgt")
-parser.add_argument('--vdom', default="root", help="VDOM name for FortiGate. Default - root")
+parser.add_argument('--dev', default="asa", choices=['asa','fgt'], help="Type of device: asa (default) or fgt")
+parser.add_argument('--vdom', default="", help="VDOM name for FortiGate. Default - none")
 parser.add_argument('--si', default="any", help="Source interface for FortiGate. Default - any")
 parser.add_argument('--di', default="any", help="Destination interface for FortiGate. Default - any")
 parser.add_argument('--rn', default=10000, help="Starting rule number for Fortigate. Default - 10000")
+parser.add_argument('--label', default='', help="Section label, Default - none")
 args = parser.parse_args()
 
 
@@ -341,7 +346,7 @@ f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 if 'asa' in args.dev:
 	dev=ASA(args.acl)
 elif 'fgt' in args.dev:
-	dev=FGT(args.vdom, args.si, args.di, args.rn)
+	dev=FGT(args.vdom, args.si, args.di, args.rn, args.label)
 else:
 	print >>sys.stderr, dev, "- not supported device. It should be asa (Cisco ASA) or fgt (FortiGate)"
 	sys.exit(1)
