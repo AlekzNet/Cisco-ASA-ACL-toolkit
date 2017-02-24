@@ -3,8 +3,8 @@ Utilities for parsing, analyzing, modifying and generating Cisco ASA ACLs. Usefu
 
 ## Files
 
-* asa.sh - Shell script to remotely collect the ASA configs
-* asa.exp - expect script to remotely get the configuration, access-groups and access lists
+* asa.sh - Shell script to remotely collect Cisco ASA configs
+* asa.exp - Expect script to remotely get and save the configuration, access-groups and access lists
 * asa.list - list of Cisco ASA firewall IP's and hostnames 
 * asaconf.py - converts ACLs from ASA config file into HTML
 * asasort.sh - sort and separate ACLs by name. 
