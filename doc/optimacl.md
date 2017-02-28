@@ -69,3 +69,14 @@ $ ipaclmatch.py -p  --permit test.acl | optimacl.py --nomerge
 101.10.10.0/24 10.9.9.2/31,10.9.9.1/32,10.9.9.4/32 esp
 10.0.0.0/8 10.3.8.4/31,10.3.9.4/31,10.4.0.0/15 *
 ```
+
+Real world example:
+
+```txt
+$ wc -l CSM_FW_ACL-01.acl
+  106204 CSM_FW_ACL-01.acl
+
+$ ipaclmatch.py -p  --permit CSM_FW_ACL-01.acl |  optimacl.py | wc -l
+     169
+```
+628x rule reduction
