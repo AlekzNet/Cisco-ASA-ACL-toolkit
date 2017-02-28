@@ -68,7 +68,30 @@ fw3/FW_ACL_2.acl 0 0
 
 ```
 
-For all permitted source addresses in test.acl create an optimized policy
+Optimize all permitted rules:
+
+```txt
+$wc -l test.acl
+     126 test.acl
+
+$ ipaclmatch.py -p  --permit test.acl | optimacl.py
+0.0.0.0/0 10.3.10.0/24 udp:30000-65535
+13.20.0.0/16 10.7.0.0/16 icmp
+10.192.0.0/13 10.7.8.0/24 tcp:1200-1351
+0.0.0.0/0 0.0.0.0/0 tcp:66
+10.0.0.0/8 10.8.9.4/31 tcp:22-23
+101.10.10.0/24 10.3.8.0/24 icmp:3,icmp:8,icmp:11
+10.192.0.0/13,10.205.0.0/16,10.206.0.0/16,10.228.0.0/14,10.232.0.0/13,10.240.0.0/12,13.20.0.0/16 10.3.0.2/32,10.3.0.1/32 udp:53
+10.0.0.0/8 10.3.9.0/30 tcp:23
+10.160.0.0/13,10.192.0.0/13,10.205.0.0/16,10.206.0.0/16,10.208.0.0/12,10.225.0.0/16,10.226.0.0/16,10.228.0.0/14,10.232.0.0/13,10.240.0.0/12,13.20.0.0/16,172.16.0.0/12 10.3.0.2/32,10.3.0.1/32 tcp:53,tcp:123
+101.10.10.0/24 10.9.9.2/31,10.9.9.1/32,10.9.9.4/32 esp
+10.0.0.0/8 10.3.8.4/31,10.3.9.4/31,10.4.0.0/15 *
+
+ipaclmatch.py -p  --permit test.acl | optimacl.py | wc -l               
+      11
+
+```
+For all permitted source addresses in test.acl create an optimized Cisco ASA policy
 
 ```txt
 $ wc -l test.acl
