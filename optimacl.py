@@ -174,14 +174,9 @@ if args.verbose:
 	print >>sys.stderr, counter, "rules in the file"
 	print >>sys.stderr, "First iteration is completed.", len(policy), "rules, and", len(star_nets), "\"allow all\" rules found"
 
-
 star_nets = group_nets(star_nets)
 if args.verbose:
 	print >>sys.stderr,"Allow rules are reduced to",len(star_nets)
-
-pprint.pprint(star_nets)
-
-# for net in star_nets: star_nets[net] = netaddr.cidr_merge(star_nets[net])
 
 # Second iteration
 # Combine services together and remove overlaps
