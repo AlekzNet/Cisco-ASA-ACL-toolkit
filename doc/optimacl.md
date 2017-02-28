@@ -74,16 +74,16 @@ $ ipaclmatch.py -p  --permit test.acl | optimacl.py --nomerge
 Real world example:
 
 ```txt
-$ grep CSM_FW_ACL-01 fw01.conf | fgrep -c extende
-3034
+$ grep CSM_FW_ACL-01 fw01.conf | fgrep extende | fgrep -c permit
+3010
 
-$ wc -l CSM_FW_ACL-01.acl
-  106204 CSM_FW_ACL-01.acl
+$ fgrep -c permit CSM_FW_ACL-01.acl
+104286
 
 $ ipaclmatch.py -p  --permit CSM_FW_ACL-01.acl |  optimacl.py | wc -l
-     169
+     167
 ```
-628x rule reduction (expanded rules), 18x rule reduction (Cisco conf)
+624x rule reduction (expanded rules), 18x rule reduction (Cisco conf)
 
 Verbosity option:
 
