@@ -12,7 +12,8 @@ Utilities for parsing, analyzing, modifying and generating Cisco ASA ACLs. Usefu
 * combine.sh - same as asasearch.sh, but it combines all similarly named ACLs across directories together
 * test.acl - test ACL
 * [ipaclmatch.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/ipaclmatch.md) - utility to search for rules matching IP-addresses, the networks they belong to, subnetworks, and generate a proto-policy.
-* [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc)
+* [optimacl-simple.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl-simple.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Works with either the source or destination IP-addresses.
+* [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Supports full polisy (src dst srv)
 * [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) - utility to generate ASA ACL's or FortiGate policy from a proto-policy
 
 ## Requirements
@@ -73,7 +74,7 @@ For all permitted source addresses in test.acl create an optimized policy
 $ wc -l test.acl
      118 test.acl
 
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s myObject --acl new_acl
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl-simple.py | genacl.py -s myObject --acl new_acl
 
 access-list new_acl extended permit udp object-group myObject 10.3.10.0 255.255.255.0 gt 30000
 access-list new_acl extended permit tcp object-group myObject 10.7.8.0 255.255.255.0 range 1200 1351
@@ -92,7 +93,7 @@ access-list new_acl extended permit ip object-group myObject 10.4.0.0 255.254.0.
 $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py | genacl.py -s myObject --acl new_acl | wc -l
       13
 
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group      
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl-simple.py --group      
 
 10.3.10.0/255.255.255.0 udp:30000-65535
 10.7.8.0/255.255.255.0 tcp:1200-1351
