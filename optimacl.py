@@ -82,24 +82,6 @@ def print_star():
 	for i in star_nets:
 		print i.ip, i.netmask, "*"
 
-# Is net a part of any networks in the netlist?
-def isnetin(net,netlist):
-	for inet in netlist:
-		if net in inet: return True
-	return False
-
-#Check if net1->net2 is netlist
-def are_nets_in(net1,net2,netlist):
-	for net in netlist:
-		if type(netlist[net]) is list:
-			for n in netlist[net]:
-				if net1 in net and net2 in n: return True
-#				print net1," and ", net2, "are not in ", net, " and ", n
-		else:
-			if net1 in net and net2 in netlist[net]: return True
-
-	return False
-
 # Add networks to the nets dict
 # nets := { src: [dst1, dst2, ...], ...}
 def add_net_pair(src,dst,nets):
@@ -147,7 +129,6 @@ def group_nets(nets):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
-#parser.add_argument('--group', help='Group services and networks together', action="store_true")
 parser.add_argument('-v','--verbose', help='Verbose mode. Messages are sent to STDERR', action="store_true")
 parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
@@ -161,39 +142,41 @@ f=sys.stdin if "-" == args.pol else open(args.pol,"r")
 if args.verbose:
 	print >>sys.stderr, "Reading ", args.pol
 
-
+counter=0
 # First iteration
 # Create star_nets
 # Create policy { (src1,dst1): {proto1:[port_list], proto2:[port_list]}, ... }
 # Fix services, then fix srcnet, and aggregate dstnet
 for line in f:
+	if args.verbose: counter += 1
 	check_line()
 	srcaddr,srcmask,dstaddr,dstmask,service = line.split()
 	srcnet=netaddr.IPNetwork(srcaddr+"/"+srcmask)
 	dstnet=netaddr.IPNetwork(dstaddr+"/"+dstmask)
 	if "*" in service:
 		add_net_pair(srcnet, dstnet, star_nets)
+		proto='ip'
+		port='*'
 	else:
 		proto,port = service.split(":") if ":" in service else [service,""]
-		pair = (srcnet,dstnet)
-		if pair not in policy:
-			policy[pair]={}
-		if proto not in policy[pair]:
-			policy[pair][proto]=[]
-		if port and port not in policy[pair][proto]:
-			policy[pair][proto].append(port)
+	pair = (srcnet,dstnet)
+	if pair not in policy:
+		policy[pair]={}
+	if proto not in policy[pair]:
+		policy[pair][proto]=[]
+	if port and port not in policy[pair][proto]:
+		policy[pair][proto].append(port)
 
 if args.verbose:
+	print >>sys.stderr, counter, " rules in the file"
 	print >>sys.stderr, "First iteration is completed. ", len(policy), "rules, and ", len(star_nets), " \"allow all\" rules found"
+
 
 # Second iteration
 # Combine services together and remove overlaps
 # Iterating over policy.keys(), because some entries will be removed from policy
 for pair in policy.keys():
-	if are_nets_in(pair[0],pair[1],star_nets):
-		#print "Deleted: "
-		#pprint.pprint(pair)
-		#pprint.pprint(policy[pair])
+	if 'ip' in policy[pair] and '*' in policy[pair]['ip']:
 		del policy[pair]
 	else:
 		for proto in policy[pair]:
