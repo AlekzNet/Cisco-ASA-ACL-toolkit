@@ -31,6 +31,7 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
+  -v, --verbose  Verbose mode. Messages are sent to STDERR
   --nomerge   Do not merge ports
 ```
 
@@ -80,3 +81,18 @@ $ ipaclmatch.py -p  --permit CSM_FW_ACL-01.acl |  optimacl.py | wc -l
      169
 ```
 628x rule reduction
+
+Verbosity option:
+
+```txt
+ipaclmatch.py -p  --permit test-02.acl |  optimacl.py -v
+Reading  -
+First iteration is completed.  152 rules, and  9  "allow all" rules found
+Second iteration is completed.  152 rules left
+Third iteration is completed.  26  services are in the policy
+Fourth iteration is completed. 11  rules in the policy, plus  1  "allow all" rules
+. . .
+All done. There are  12  rules in the policy.
+```
+
+
