@@ -1,4 +1,4 @@
-## optimacl.py
+## optimacl-simple.py
 Optimizes proto-policy created by ipaclmatch.py. As input it takes lines with three fields:
 
 IP-address Netmask Protocol:Port
@@ -13,8 +13,8 @@ IP-address Netmask Protocol:Port
 ### Usage:
 
 ```txt
-optimacl.py --help
-usage: optimacl.py [-h] [--group] [pol]
+optimacl-simple.py --help
+usage: optimacl-simple.py [-h] [--group] [pol]
 
 positional arguments:
   pol         Firewall policy or "-" to read from the console
@@ -30,7 +30,7 @@ optional arguments:
 For all permitted source addresses in test.acl create an optimized policy
 
 ```txt
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl-simple.py
 
 10.3.10.0 255.255.255.0 udp:30000-65535
 10.7.8.0 255.255.255.0 tcp:1200-1351
@@ -50,7 +50,7 @@ $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py
 Same as above but ports are not merged:
 
 ```txt
-$ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --nomerge
+$ ipaclmatch.py -t -s --permit test.acl |  optimacl-simple.py --nomerge
 10.3.10.0 255.255.255.0 udp:30000-65535
 10.7.8.0 255.255.255.0 tcp:1250-1350
 10.8.9.4 255.255.255.254 tcp:22
@@ -74,7 +74,7 @@ $ ipaclmatch.py -t -s --permit test.acl |  optimacl.py --nomerge
 For all permitted source addresses in test.acl create an optimized policy, grouped by addresses and services:
 
 ```txt
-ipaclmatch.py -t -s --permit test.acl |  optimacl.py --group
+ipaclmatch.py -t -s --permit test.acl |  optimacl-simple.py --group
 
 10.3.10.0/255.255.255.0 udp:30000-65535
 10.7.8.0/255.255.255.0 tcp:1200-1351
