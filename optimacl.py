@@ -147,7 +147,8 @@ def group_nets(nets):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
-parser.add_argument('--group', help='Group services and networks together', action="store_true")
+#parser.add_argument('--group', help='Group services and networks together', action="store_true")
+parser.add_argument('-v','--verbose', help='Verbose mode. Messages are sent to STDERR', action="store_true")
 parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
 
@@ -157,6 +158,9 @@ star_nets={} # { [srcnet1, srcnet2, ...]: [dstnet1, dstnet2, ...], ... }
 mode = '' # True if addr srv, False if addr1 addr2 srv
 
 f=sys.stdin if "-" == args.pol else open(args.pol,"r")
+if args.verbose:
+	print >>sys.stderr, "Reading ", args.pol
+
 
 # First iteration
 # Create star_nets
@@ -179,6 +183,8 @@ for line in f:
 		if port and port not in policy[pair][proto]:
 			policy[pair][proto].append(port)
 
+if args.verbose:
+	print >>sys.stderr, "First iteration is completed. ", len(policy), "rules, and ", len(star_nets), " \"allow all\" rules found"
 
 # Second iteration
 # Combine services together and remove overlaps
@@ -204,6 +210,9 @@ for pair in policy.keys():
 			else:
 				policy[pair].append(proto)
 
+if args.verbose:
+	print >>sys.stderr, "Second iteration is completed. ", len(policy), "rules left"
+
 #print("Policy")
 #pprint.pprint(policy)
 
@@ -216,6 +225,9 @@ for pair in policy:
 		if srv not in services.keys():
 			services[srv] = {}
 		add_net_pair(pair[0],pair[1],services[srv])
+
+if args.verbose:
+	print >>sys.stderr, "Third iteration is completed. ", len(services), " services are in the policy"
 
 policy={}
 
@@ -230,6 +242,11 @@ for srv in services:
 #	print "Grouping result"
 #	pprint.pprint(services[srv])
 	add_srv(srv,tuple([services[srv].keys()[0],tuple(services[srv].values()[0])]),policy)
+
+star_nets = group_nets(star_nets)
+
+if args.verbose:
+	print >>sys.stderr, "Fourth iteration is completed.", len(policy), " rules in the policy, plus ", len(star_nets), " \"allow all\" rules"
 
 #print "Finished grouping service nets"
 
@@ -247,9 +264,12 @@ for nets in policy:
 	srv=",".join(policy[nets])
 	print src,dst,srv
 
-star_nets = group_nets(star_nets)
+
 if len(star_nets):
 	for net in star_nets:
 		src=",".join(map(lambda x: str(x), net))
 		dst=",".join(map(lambda x: str(x), star_nets[net]))
 		print src,dst,"*"
+
+if args.verbose:
+	print >>sys.stderr, "All done. There are ", len(policy) + len(star_nets), " rules in the policy."
