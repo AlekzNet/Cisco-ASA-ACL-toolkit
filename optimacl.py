@@ -154,8 +154,6 @@ for line in f:
 	if args.verbose: counter += 1
 	check_line()
 	srcaddr,srcmask,dstaddr,dstmask,service = line.split()
-	if srcaddr == dstaddr and srcmask == dstmask and '0.0.0.0' not in srcaddr:
-		continue
 	srcnet=netaddr.IPNetwork(srcaddr+"/"+srcmask)
 	dstnet=netaddr.IPNetwork(dstaddr+"/"+dstmask)
 	if "*" in service:
@@ -222,9 +220,12 @@ policy={}
 
 
 # Fourth iteration
-# Grouping SRC and DST networks per service
 for srv in services:
+	# Grouping SRC and DST networks per service
 	services[srv]=group_nets(services[srv])
+	# Grouping services together, based on the same src-dst pairs
+	# All indexes must be immutable, hence converting to tuples
+	# separately, src (keys) and dst (values) per srv
 	add_srv(srv,tuple([services[srv].keys()[0],tuple(services[srv].values()[0])]),policy)
 
 if args.verbose:
