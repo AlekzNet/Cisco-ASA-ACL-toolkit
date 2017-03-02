@@ -42,15 +42,21 @@ def unfold_rec(obj, objarr,index=0):
 		# If object-group is found,
 		# recurse through the object-groups
 		if "object-group" in str(item):
-				# Add the content of the object-group
-				# item by item
-				for j in objarr[item.split()[1]]:
-					obj.append(j)
-				# Remove the item with object-group
-				del obj[i]
-				# and dive into the new updated object
-				# We are passing the index we are currently on
-				unfold_rec(obj,objarr,i)
+			# Add the content of the object-group
+			# item by item
+			for j in objarr[item.split()[1]]:
+				obj.append(j)
+			# Remove the item with object-group
+			del obj[i]
+			# and dive into the new updated object
+			# We are passing the index we are currently on
+			unfold_rec(obj,objarr,i)
+		elif 'net-object' in str(item):
+			# if net-object is in the group
+			# get its address from netobj
+			obj.append(netobj[item.split()[1]])
+			del obj[i]
+			unfold_rec(obj,objarr,i)
 
 def html_hdr(title):
 	print '<html lang=en><head><title>' + title + '</title></head><body> <style> \
@@ -222,6 +228,8 @@ re_netgrp = re.compile('^\s*object-group\s+network\s+(?P<net_grp>\S+)', re.IGNOR
 re_netobj = re.compile('^\s*network-object\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.IGNORECASE)
 #network-object host 10.1.1.1
 re_netobj_host = re.compile('^\s*network-object\s+host\s+(?P<ip>\S+)', re.IGNORECASE)
+#network-object object mynet1
+re_netobj_obj = re.compile('^\s*network-object\s+object\s+(?P<obj_name>\S+)', re.IGNORECASE)
 #object-group service mysrvgrp1
 re_srvgrp = re.compile('^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s*$', re.IGNORECASE)
 #object-group service srv_tcp tcp
@@ -264,6 +272,8 @@ for line in f:
 			newobj(netgrp,re_netgrp.search(line).group('net_grp'))
 		elif re_netobj_host.search(line):
 			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj_host.search(line).group('ip') + '/32'))
+		elif re_netobj_obj.search(line):
+			fillobj(curobj, curname, 'net-object ' + re_netobj_obj.search(line).group('obj_name'))
 		elif re_netobj.search(line):
 			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj.search(line).group('ip') +
 				'/' + re_netobj.search(line).group('mask')))
