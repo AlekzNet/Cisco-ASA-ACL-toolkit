@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for fw in `awk '{print $2}' asa.list`
+for fw in `egrep -v '^[  ]*$|^[  ]*#' asa.list | awk '{print $2}'`
 do
 	echo $fw
 	for acl in `awk '/^access-group/ {print $2}' $fw/$fw*groups`
