@@ -187,9 +187,10 @@ def group_nets(nets):
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
 #parser.add_argument('--group', help='Group services and networks together', action="store_true")
-parser.add_argument('-v','--verbose', default=1,  type=int, nargs='?', help='Verbose mode. Messages are sent to STDERR. Default=1')
+parser.add_argument('-v','--verbose', help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv', action='count')
 parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
+
 
 services={} #  { service: { srcnet: [dstnet1, dstnet2, ...] }, ... }
 policy={} #
