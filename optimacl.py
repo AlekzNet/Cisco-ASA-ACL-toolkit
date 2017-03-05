@@ -17,7 +17,7 @@ except ImportError:
 def debug(string,level=1):
 	if args.verbose >= level:
 		if type(string) is string:
-			print >>sys.stderr,string
+			print >>sys.stderr,"%s" % string
 		else:
 			pprint.pprint(string,sys.stderr,width=70)
 
@@ -31,17 +31,17 @@ def check_line():
 	global line, mode
 	line = line.strip()
 	if "host" in line:
-		print >>sys.stderr, line
-		print >>sys.stderr, "\'host\' word not expected."
+		debug(line,0)
+		debug("'host\' word not expected",0)
 		sys.exit(1)
 	# Replace any with 0/0
 	line=re.sub(r'\bany\b','0.0.0.0 0.0.0.0',line)
 	if line.count(" ") == 2: result=True
 	elif line.count(" ") == 4: result=False
 	else:
-		print >>sys.stderr, line
-		print >>sys.stderr, "Too few or too many parameters. Expected: \n network mask proto:port \n or \n \
-			srcaddr src mask dstaddr dstmask proto:port"
+		debug(line,0)
+		debug("Too few or too many parameters. Expected: \n network mask proto:port \n or \n \
+			srcaddr src mask dstaddr dstmask proto:port",0)
 		sys.exit(1)
 	if mode == '':
 		mode = result
@@ -128,7 +128,7 @@ def add_srv(srv,nets,arr):
 	if srv not in arr[nets]:
 		arr[nets].append(srv)
 	debug("add_srv -- after adding",5)
-	debug(arr[nets])
+	debug(arr[nets],5)
 
 def group_nets(nets):
 	# nets = { src: [dst1, dst2, ...], ...}
@@ -187,7 +187,7 @@ def group_nets(nets):
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
 #parser.add_argument('--group', help='Group services and networks together', action="store_true")
-parser.add_argument('-v','--verbose', default=0,  type=int, nargs='?', help='Verbose mode. Messages are sent to STDERR. Default=1')
+parser.add_argument('-v','--verbose', default=1,  type=int, nargs='?', help='Verbose mode. Messages are sent to STDERR. Default=1')
 parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
 
@@ -205,7 +205,7 @@ counter=0
 # Create policy { (src1,dst1): {proto1:[port_list], proto2:[port_list]}, ... }
 # Fix services, then fix srcnet, and aggregate dstnet
 for line in f:
-	if args.verbose > 0: counter += 1
+	if args.verbose: counter += 1
 	check_line()
 	srcaddr,srcmask,dstaddr,dstmask,service = line.split()
 	srcnet=netaddr.IPNetwork(srcaddr+"/"+srcmask)
@@ -227,7 +227,7 @@ for line in f:
 	if port and port not in policy[pair][proto]:
 		policy[pair][proto].append(port)
 
-if args.verbose: counter += counter
+
 debug("%d rules in the file" % counter )
 debug("First iteration is completed. %d rules, and %d \"allow all\" rules found" % (len(policy), len(star_nets)))
 debug(policy,3)
