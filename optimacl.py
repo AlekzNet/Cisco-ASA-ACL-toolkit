@@ -14,6 +14,13 @@ except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
 
+def debug(string,level=1):
+	if args.verbose >= level:
+		if type(string) is string:
+			print >>sys.stderr,string
+		else:
+			pprint.pprint(string,sys.stderr,width=70)
+
 # Check if the line contains 3 or 4 fields only
 # Remove leading and trailing spaces
 # Replace any with 0/0
@@ -85,54 +92,102 @@ def are_nets_in(net1,net2,netlist):
 			for n in netlist[net]:
 				if type(net) is tuple or type(net) is list:
 					for m in net:
-						if net1 in m and net2 in n: return True
+						if net1 in m and net2 in n:
+							debug("are_nets_in -- %s is in %s, %s is in %s" % (str(net1), str(m), str(net2), str(n)),4)
+							return True
 				else:
-					if net1 in net and net2 in n: return True
+					if net1 in net and net2 in n:
+						debug("are_nets_in -- Not list. %s is in %s, %s is in %s" % (str(net1), str(net), str(net2), str(n)),4)
+						return True
 		else:
-			if net1 in net and net2 in netlist[net]: return True
+			if net1 in net and net2 in netlist[net]:
+				debug("are_nets_in -- %s is in %s, %s is in %s" % (str(net1), str(net), str(net2), str(netlist[net])),4)
+				return True
 	return False
 
 # Add networks to the nets dict
 # nets := { src: [dst1, dst2, ...], ...}
 def add_net_pair(src,dst,nets):
+	debug("add_net_pair -- Adding new net_pair",5)
+	debug(src,5)
+	debug(dst,5)
 	if src not in nets:
 		nets[src] = []
 	if dst not in nets[src]:
 		nets[src].append(dst)
+	debug("add_net_pair -- Current nets",5)
+	debug(nets[src],5)
 
 #Group services by network groups
 def add_srv(srv,nets,arr):
+	debug("add_srv -- adding service %s" % srv, 5)
+	debug ("add_srv -- for the following nets",5)
+	debug(nets,5)
 	if nets not in arr:
 		arr[nets]=[]
 	if srv not in arr[nets]:
 		arr[nets].append(srv)
+	debug("add_srv -- after adding",5)
+	debug(arr[nets])
 
 def group_nets(nets):
 	# nets = { src: [dst1, dst2, ...], ...}
 	revnets = {} # nets reversed: { dst: [src1, src2, ...], ... }
 	# next iteration
+	debug("group_nets -- Begin ====================",4)
+	debug("group_nets -- Before first phase of grouping (nets)",4)
+	debug(nets,4)
+
 	for src in nets:
+
+		debug("group_nets -- The source",5)
+		debug(src,5)
+		debug("group_nets -- 1F The destination",5)
+		debug(nets[src],5)
 		nets[src] = netaddr.cidr_merge(nets[src])
-		#if len(nets) == 1:
-			#print "Only one pair"
-			#return {([src]):nets[src]}
+		debug("group_nets -- 1F After CIDR-merge",5)
+		debug(nets[src],5)
+		if len(nets) == 1:
+			debug("group_nets -- Only one pair",4)
+			return {(src,):nets[src]}
 		for dst in nets[src]:
+			debug("group_nets -- For the destination",5)
+			debug(dst,5)
+
 			if dst not in revnets:
 				revnets[dst] = []
 			if src not in revnets[dst]:
 				revnets[dst].append(src)
+				debug("group_nets -- Added the following source",5)
+				debug(src,5)
+			debug("group_nets -- Current revnets[dst]",5)
+			debug(revnets[dst],5)
 	# grouping
+	debug("group_nets -- The result of the first phase of grouping (revnets)",4)
+	debug(revnets,4)
+	debug("group_nets -- Second phase of grouping",4)
+
 	nets = {}
 	for dst in revnets:
+		debug("group_nets -- 2F The destination",5)
+		debug(dst,5)
+		debug("group_nets -- The corresponfing sources",5)
+		debug(revnets[dst],5)
 		revnets[dst] = netaddr.cidr_merge(revnets[dst])
+		debug("group_nets -- 2F After CIDR-merge",5)
+		debug(revnets[dst],5)
 		add_net_pair(tuple(revnets[dst]),dst,nets)
+	debug("group_nets -- The result of grouping (nets)",4)
+	debug(nets,4)
+
+	debug("group_nets -- End ====================",4)
 	return nets
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" (default) to read from the console")
 #parser.add_argument('--group', help='Group services and networks together', action="store_true")
-parser.add_argument('-v','--verbose', help='Verbose mode. Messages are sent to STDERR', action="store_true")
+parser.add_argument('-v','--verbose', default=0,  type=int, nargs='?', help='Verbose mode. Messages are sent to STDERR. Default=1')
 parser.add_argument('--nomerge', help='Do not merge ports', action="store_true")
 args = parser.parse_args()
 
@@ -142,8 +197,7 @@ star_nets={} # { [srcnet1, srcnet2, ...]: [dstnet1, dstnet2, ...], ... }
 mode = '' # True if addr srv, False if addr1 addr2 srv
 
 f=sys.stdin if "-" == args.pol else open(args.pol,"r")
-if args.verbose:
-	print >>sys.stderr, "Reading ", args.pol
+debug("Reading from " + args.pol)
 
 counter=0
 # First iteration
@@ -151,38 +205,52 @@ counter=0
 # Create policy { (src1,dst1): {proto1:[port_list], proto2:[port_list]}, ... }
 # Fix services, then fix srcnet, and aggregate dstnet
 for line in f:
-	if args.verbose: counter += 1
+	if args.verbose > 0: counter += 1
 	check_line()
 	srcaddr,srcmask,dstaddr,dstmask,service = line.split()
 	srcnet=netaddr.IPNetwork(srcaddr+"/"+srcmask)
 	dstnet=netaddr.IPNetwork(dstaddr+"/"+dstmask)
 	if "*" in service:
+		debug("New star_net pair found",4)
+		debug(srcnet,4)
+		debug(dstnet,4)
 		add_net_pair(srcnet, dstnet, star_nets)
+		proto='ip'
+		port='*'
 	else:
 		proto,port = service.split(":") if ":" in service else [service,""]
-		pair = (srcnet,dstnet)
-		if pair not in policy:
-			policy[pair]={}
-		if proto not in policy[pair]:
-			policy[pair][proto]=[]
-		if port and port not in policy[pair][proto]:
-			policy[pair][proto].append(port)
+	pair = (srcnet,dstnet)
+	if pair not in policy:
+		policy[pair]={}
+	if proto not in policy[pair]:
+		policy[pair][proto]=[]
+	if port and port not in policy[pair][proto]:
+		policy[pair][proto].append(port)
 
-if args.verbose:
-	print >>sys.stderr, counter, "rules in the file"
-	print >>sys.stderr, "First iteration is completed.", len(policy), "rules, and", len(star_nets), "\"allow all\" rules found"
+if args.verbose: counter += counter
+debug("%d rules in the file" % counter )
+debug("First iteration is completed. %d rules, and %d \"allow all\" rules found" % (len(policy), len(star_nets)))
+debug(policy,3)
 
 star_nets = group_nets(star_nets)
-if args.verbose:
-	print >>sys.stderr,"Allow rules are reduced to",len(star_nets)
+debug("Allow rules are reduced to %d" % len(star_nets))
 
 # Second iteration
 # Combine services together and remove overlaps
 # Iterating over policy.keys(), because some entries will be removed from policy
 for pair in policy.keys():
+	# If the servie is ip * - delete this line
+	if 'ip' in policy[pair] and '*' in policy[pair]['ip']:
+		debug("Removing *",4)
+		debug(pair,4)
+		debug(policy[pair],4)
+		del policy[pair]
 	# Testing src, dst against star_nets
 	# is the slowest part of the program
-	if are_nets_in(pair[0],pair[1],star_nets):
+	elif are_nets_in(pair[0],pair[1],star_nets):
+		debug("Removing networks matching star_nets",4)
+		debug(pair,4)
+		debug(policy[pair],4)
 		del policy[pair]
 	else:
 		for proto in policy[pair]:
@@ -199,8 +267,8 @@ for pair in policy.keys():
 			else:
 				policy[pair].append(proto)
 
-if args.verbose:
-	print >>sys.stderr, "Second iteration is completed.", len(policy), "rules left"
+debug("Second iteration is completed. %d rules left" % len(policy))
+debug(policy,3)
 
 
 # Third iteration is to create a list of networks per allowed service
@@ -213,11 +281,10 @@ for pair in policy:
 			services[srv] = {}
 		add_net_pair(pair[0],pair[1],services[srv])
 
-if args.verbose:
-	print >>sys.stderr, "Third iteration is completed.", len(services), "services are in the policy"
+debug("Third iteration is completed. %d services are in the policy" % len(services))
 
 policy={}
-
+debug(services,3)
 
 # Fourth iteration
 for srv in services:
@@ -226,13 +293,15 @@ for srv in services:
 	# Grouping services together, based on the same src-dst pairs
 	# All indexes must be immutable, hence converting to tuples
 	# separately, src (keys) and dst (values) per srv
-	add_srv(srv,tuple([services[srv].keys()[0],tuple(services[srv].values()[0])]),policy)
+	for src in services[srv]:
+		add_srv(srv,(src,tuple(services[srv][src])),policy)
 
-if args.verbose:
-	print >>sys.stderr, "Fourth iteration is completed.", len(policy), "rules in the policy, plus", len(star_nets), "\"allow all\" rules"
-
+debug("Fourth iteration is completed. %d rules in the policy, plus %d \"allow all\" rules" % (len(policy), len(star_nets)))
+debug("Modified services",3)
+debug(services,3)
+debug("Resulting policy")
 #print "Finished grouping service nets"
-
+debug(policy,3)
 
 for nets in policy:
 	src=",".join(map(lambda x: str(x), nets[0]))
@@ -247,5 +316,4 @@ if len(star_nets):
 		dst=",".join(map(lambda x: str(x), star_nets[net]))
 		print src,dst,"*"
 
-if args.verbose:
-	print >>sys.stderr, "All done. There are", len(policy) + len(star_nets), "rules in the policy."
+debug("All done. There are %d rules in the policy." % (len(policy) + len(star_nets)))
