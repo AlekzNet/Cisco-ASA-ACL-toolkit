@@ -6,60 +6,76 @@ import string
 import argparse
 import re
 import sys
+import pprint
 try:
 	import netaddr
 except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found.'
 	sys.exit(1)
 
+def debug(string,level=1):
+	if args.verbose >= level:
+		if type(string) is string:
+			print >>sys.stderr,"%s" % string
+		else:
+			pprint.pprint(string,sys.stderr,width=70)
+
 # True if the IP belongs to the Source IP
 # arr[7] -- source IP-address or host
 # arr[8] -- netmask or hostip
-def issrc():
+def issrc(searchip):
+	debug("Is %s in the source?" % str(searchip),2)
 	if "host" in arr[7]:
 		arr[7] = arr[8]
 		arr[8] = "255.255.255.255"
-
-	if args.direct:	return isdir(arr[7],arr[8])
+	if args.direct:	return isdir(searchip,arr[7],arr[8])
 	if arr[7] == "0.0.0.0" and args.noany : return False
-	if args.contain: return isnetin(arr[7],arr[8])
-	else: return isinnet(arr[7],arr[8])
+	if args.contain: return isnetin(searchip,arr[7],arr[8])
+	else:
+		if isinnet(searchip,arr[7],arr[8]):
+			debug("Yes, it's in %s/%s" % (arr[7],arr[8]),2)
+			if args.replace and args.policy and not args.both:
+				arr[7] = str(searchip.ip)
+				arr[8] = str(searchip.netmask)
+			return True
+		else:
+			debug("No, it's not in %s/%s" % (arr[7],arr[8]),2)
 
 # True if the IP belongs to the Dest IP
 # arr[9] -- dest IP-address or host
 # arr[10] -- netmask or hostip
-def isdst():
-
+def isdst(searchip):
+	debug("Is %s in the destination?" % str(searchip),2)
 	if "host" in arr[9]:
 		arr[9] = arr[10]
 		arr[10] = "255.255.255.255"
-
-	if args.direct: return isdir(arr[9],arr[10])
+	if args.direct: return isdir(searchip,arr[9],arr[10])
 	if arr[9] == "0.0.0.0" and args.noany : return False
-	if 	args.contain: return isnetin(arr[9],arr[10])
-	else: return isinnet(arr[9],arr[10])
+	if 	args.contain: return isnetin(searchip,arr[9],arr[10])
+	else:
+		if isinnet(searchip,arr[9],arr[10]):
+			debug("Yes, it's in %s/%s" % (arr[9],arr[10]),2)
+			if args.replace and args.policy and not args.both:
+				arr[9] = str(searchip.ip)
+				arr[10] = str(searchip.netmask)
+			return True
+		else:
+			debug("No, it's not in %s/%s" % (arr[9],arr[10]),2)
 
 # True if there is a direct match
 # Go through all IP's in ips and compare with the ip and mask from the ACL
-def isdir(ip,mask):
-	result = False
-	for i in ips:
-		result = result or ( str(netaddr.IPNetwork(i).ip) == ip and str(netaddr.IPNetwork(i).netmask) == mask )
-	return result
+def isdir(searchip,ip,mask):
+#	if result and args.verbose:
+#		debug("Direct match found for %s (args) and %s %s (ACL)" % (args.addr, ip,mask) ,2)
+	return str(searchip.ip) == ip and str(searchip.netmask) == mask
 
 # Does any of the IP-addresses we are searching for belong to the current IP network?
-def isinnet(ip,mask):
-	result = False
-	for i in ips:
-		result = result or i in netaddr.IPNetwork(ip + "/" + mask)
-	return result
+def isinnet(searchip,ip,mask):
+	return searchip in netaddr.IPNetwork(ip + "/" + mask)
 
 # Does any of the IP-addresses we are searching for contains the current IP network?
-def isnetin(ip,mask):
-	result = False
-	for i in ips:
-		result = result or netaddr.IPNetwork(ip + "/" + mask) in i
-	return result
+def isnetin(searchip,ip,mask):
+	return netaddr.IPNetwork(ip + "/" + mask) in searchip
 
 # Postformat the ACL and print
 # arr[6] - protocol (ip, tcp, udp)
@@ -153,6 +169,7 @@ def serv2num(f):
 parser = argparse.ArgumentParser()
 parser.add_argument('-a','--addr', default='0.0.0.0/0', help="Comma-separated list of addresses/netmasks. \"all\" shows all lines")
 parser.add_argument('acl', default="-", nargs='?', help="Cisco ASA ACL filename or \"-\" to read from the console (default)")
+parser.add_argument('-v','--verbose', help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv', action='count')
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s', '--src', help="Search the source", action="store_true")
 sd.add_argument('-d', '--dst', help="Search the destination", action="store_true")
@@ -168,6 +185,7 @@ ra.add_argument('--range', default=True, help="Replace lt, gt, and neq with rang
 ra.add_argument('--norange', default=False, help="Replace lt, gt, and neq with \<, \>, and ! symbols", action="store_true")
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 parser.add_argument('-t','--transform', help='Transform the output. Must be used with either -s or -d and with either --deny or --permit', action="store_true")
+parser.add_argument('-r','--replace', help='Replace the container networks with the matching IP-address from --addr', action="store_true")
 parser.add_argument('-p','--policy', help='Print the policy in the form:\n SourceIP SourceMask DestIP DestMask Proto:Port. Must be used with either --deny or --permit', action="store_true")
 parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
 parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
@@ -206,17 +224,17 @@ else:
 f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 
 for line in f:
-
+	debug(line,3)
 	# Remove leftovers
 	if "remark" in line or "object-group" in line or " object " in line or not "extended" in line: continue
 	line=re.sub(r'[ 	][ 	]*',' ',line) 	#replace all multiple tabs and.or spces with a sigle space
-	line=re.sub(r'\(hitcnt.*$| log .*$','',line)		#remove hitcounters and logging statements
+	line=re.sub(r'\(hitcnt.*$|\s+log\s+.*$|\s+log$','',line)		#remove hitcounters and logging statements
 	line=line.replace(r'<--- More --->','')
 	line = line.strip()
 
 	# Replace any with 0/0
 	line=re.sub(r'\bany\b|\bany4\b','0.0.0.0 0.0.0.0',line)
-
+	debug(line,2)
 	arr = line.split()
 
 	# We are not interested in permit lines, if --deny is set
@@ -240,15 +258,15 @@ for line in f:
 
 	if "0.0.0.0/0" in args.addr and not args.any and not args.noany:
 		print_acl()
-	elif args.src:
-		if issrc(): print_acl()
-
-	elif args.dst:
-		if isdst(): print_acl()
-
-	elif args.both:
-		if issrc() or isdst(): print_acl()
-
+	else:
+		for searchip in ips:
+			debug("Searching for %s" % str(searchip),2)
+			if args.src:
+				if issrc(searchip): print_acl()
+			elif args.dst:
+				if isdst(searchip): print_acl()
+			elif args.both:
+				if issrc(searchip) or isdst(searchip): print_acl()
 	del arr[:]
 
 f.close()
