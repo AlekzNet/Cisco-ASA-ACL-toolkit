@@ -24,43 +24,53 @@ def debug(string,level=1):
 # arr[7] -- source IP-address or host
 # arr[8] -- netmask or hostip
 def issrc(searchip):
+	global srcip,srcmask,dstip,dstmask
 	debug("Is %s in the source?" % str(searchip),2)
-	if "host" in arr[7]:
-		arr[7] = arr[8]
-		arr[8] = "255.255.255.255"
-	if args.direct:	return isdir(searchip,arr[7],arr[8])
+	dstip = arr[9]
+	dstmask = arr[10]
 	if arr[7] == "0.0.0.0" and args.noany : return False
-	if args.contain: return isnetin(searchip,arr[7],arr[8])
-	else:
-		if isinnet(searchip,arr[7],arr[8]):
-			debug("Yes, it's in %s/%s" % (arr[7],arr[8]),2)
-			if args.replace and args.policy and not args.both:
-				arr[7] = str(searchip.ip)
-				arr[8] = str(searchip.netmask)
-			return True
+	if (args.direct and isdir(searchip,arr[7],arr[8])) or (args.contain and isnetin(searchip,arr[7],arr[8])):
+		srcip = arr[7]
+		srcmask = arr[8]
+		return True
+	elif isinnet(searchip,arr[7],arr[8]):
+		debug("issrc -- Yes, it's in %s/%s" % (arr[7],arr[8]),2)
+		if args.replace and args.policy and not args.both:
+			srcip = str(searchip.ip)
+			srcmask = str(searchip.netmask)
 		else:
-			debug("No, it's not in %s/%s" % (arr[7],arr[8]),2)
+			srcip = arr[7]
+			srcmask = arr[8]
+		return True
+	else:
+		debug("issrc -- No, it's not in %s/%s" % (arr[7],arr[8]),2)
+		return False
 
 # True if the IP belongs to the Dest IP
 # arr[9] -- dest IP-address or host
 # arr[10] -- netmask or hostip
 def isdst(searchip):
+	global srcip,srcmask,dstip,dstmask
 	debug("Is %s in the destination?" % str(searchip),2)
-	if "host" in arr[9]:
-		arr[9] = arr[10]
-		arr[10] = "255.255.255.255"
-	if args.direct: return isdir(searchip,arr[9],arr[10])
+	srcip = arr[7]
+	srcmask = arr[8]
 	if arr[9] == "0.0.0.0" and args.noany : return False
-	if 	args.contain: return isnetin(searchip,arr[9],arr[10])
-	else:
-		if isinnet(searchip,arr[9],arr[10]):
-			debug("Yes, it's in %s/%s" % (arr[9],arr[10]),2)
-			if args.replace and args.policy and not args.both:
-				arr[9] = str(searchip.ip)
-				arr[10] = str(searchip.netmask)
-			return True
+	if (args.direct and isdir(searchip,arr[9],arr[10])) or (args.contain and isnetin(searchip,arr[9],arr[10])):
+		dstip = arr[9]
+		dstmask = arr[10]
+		return True
+	elif isinnet(searchip,arr[9],arr[10]):
+		debug("isdst -- Yes, it's in %s/%s" % (arr[9],arr[10]),2)
+		if args.replace and args.policy and not args.both:
+			dstip = str(searchip.ip)
+			dstmask = str(searchip.netmask)
 		else:
-			debug("No, it's not in %s/%s" % (arr[9],arr[10]),2)
+			dstip = arr[9]
+			dstmask = arr[10]
+		return True
+	else:
+		debug("isdst -- No, it's not in %s/%s" % (arr[9],arr[10]),2)
+		return False
 
 # True if there is a direct match
 # Go through all IP's in ips and compare with the ip and mask from the ACL
@@ -89,24 +99,21 @@ def isnetin(searchip,ip,mask):
 # action is either empty or 'deny'
 # neq_range contains the second range, if 'neq'
 def print_acl():
-	global line
+	global line, srcip,srcmask,dstip,dstmask,service,neq_range
+	debug("This line matches the criteria",2)
+	debug(line)
 	if args.transform:
+		prepsvc()
+		debug("src= %s/%s dst= %s/%s srv= %s neq_range= %s" % (srcip,srcmask,dstip,dstmask,service,neq_range),2)
 		if args.policy:
-			host2num("src")
-			host2num("dst")
-			neq_range = prepsvc()
-			print arr[7],arr[8],arr[9],arr[10],arr[11],action
-			if neq_range: print arr[7],arr[8],arr[9],arr[10],neq_range,action
+			print srcip,srcmask,dstip,dstmask,service,action
+			if neq_range: print srcip,srcmask,dstip,dstmask,neq_range,action
 		elif args.src:
-			host2num("src")
-			neq_range = prepsvc()
-			print arr[9],arr[10],arr[11], action
-			if neq_range: print arr[9],arr[10],neq_range,action
+			print dstip,dstmask,service, action
+			if neq_range: print dstip,dstmask,neq_range,action
 		elif args.dst:
-			host2num("dst")
-			neq_range = prepsvc()
-			print arr[7],arr[8],arr[11],action
-			if neq_range: print arr[7],arr[8],neq_range,action
+			print srcip,srcmask,service,action
+			if neq_range: print srcip,srcmask,neq_range,action
 	elif args.noline:
 		line=re.sub(r'\bline\b \d+ ','',line)
 		print line.replace('0.0.0.0 0.0.0.0','any')
@@ -114,6 +121,7 @@ def print_acl():
 
 # Replace "host" with IP 255.255.255.255
 def host2num(where):
+	global srcip,srcmask,dstip,dstmask
 	if "src" in where:
 		if "host" in arr[9]:
 			arr[9] = arr[10]
@@ -127,6 +135,12 @@ def host2num(where):
 # If --range: replace neq, gt, lt with ranges
 # Return True if "neq", False in all other cases
 def prepsvc():
+	global service,neq_range
+	debug("prepsvc -- Before prepsvc",3)
+	debug(arr,3)
+	if service:
+		debug("prepsvc -- Already processed. Skipping",3)
+		return
 	if "icmp" in arr[6] and len(arr)-1 >= 11: arr.insert(11,"eq")
 	if len(arr)-1 >= 12: serv2num(12)
 	if len(arr)-1 >= 13: serv2num(13)
@@ -137,8 +151,10 @@ def prepsvc():
 		if args.range:
 			# the first range goes into arr[11]
 			arr[11] = arr[6]+':1-'+str(int(arr[12])-1)
+			service = arr[11]
 			# the second range is returned
-			return arr[6]+':'+str(int(arr[12])+1)+'-65535'
+			neq_range=arr[6]+':'+str(int(arr[12])+1)+'-65535'
+			return
 		else:
 			arr[11] = arr[6]+'!'+arr[12]
 	elif "eq" in arr[11]: arr[11] = arr[6]+':'+arr[12]
@@ -153,16 +169,25 @@ def prepsvc():
 		else:
 			arr[11] = arr[6]+'>'+arr[12]
 	else: arr[11] = arr[6]
-	return False
+	service=arr[11]
+	debug("prepsvc -- After prepsvc",3)
+	debug(arr,3)
+
 
 # Replace service name with port number
 # f is the position in arr
 def serv2num(f):
-	if re.match(r'\d+',arr[f]): return  # if number nothing to do
-	if arr[f] in s2n: arr[f]=s2n[arr[f]]
+	if re.match(r'\d+',arr[f]):
+		debug("serv2num -- Service %s is a number" % str(arr[f]),3)
+		return  # if number nothing to do
+	if arr[f] in s2n:
+		debug("serv2num -- Replacing %s with %s" % (arr[f],s2n[arr[f]]), 3)
+		arr[f]=s2n[arr[f]]
+
 	else:
-		print >>sys.stderr, line
-		print >>sys.stderr, arr[f] + " is not a known service"
+		debug(line,0)
+		debug(arr,0)
+		debug("serv2num -- %s is not a known service" % str(arr[f]),0)
 		sys.exit(1)
 
 
@@ -196,11 +221,11 @@ if not args.src and not args.dst and not args.both: args.both = True
 if "all" in args.addr or "any" in args.addr: args.addr="0.0.0.0/0"
 if "0.0.0.0/0" in args.addr and not args.any: args.contain=True
 if args.both and args.transform:
-	print >>sys.stderr, "--transform requires either --src or --dst. --transform cannot be used with --both"
+	debug("--transform requires either --src or --dst. --transform cannot be used with --both",0)
 	sys.exit(1)
 if args.policy: args.transform=True
 if args.both and args.direct:
-	print >>sys.stderr, "--direct requires either --src or --dst. --both cannot be used with --direct"
+	debug("--direct requires either --src or --dst. --both cannot be used with --direct",0)
 	sys.exit(1)
 
 if args.norange: args.range=False
@@ -213,7 +238,7 @@ if args.transform:
 
 
 ips = []
-arr = []
+
 
 # If a list of IP's is given, add them all
 if "," in args.addr:
@@ -225,6 +250,9 @@ else:
 f=sys.stdin if "-" == args.acl else open (args.acl,"r")
 
 for line in f:
+	arr = []
+	service=''
+	neq_range=''
 	debug(line,3)
 	# Remove leftovers
 	if "remark" in line or "object-group" in line or " object " in line or not "extended" in line: continue
@@ -257,7 +285,14 @@ for line in f:
 	if "eq" in arr[9] or "lt" in arr[9] or "gt" in arr[9] or "neq" in arr[9]:
 		del arr[9:11]
 
+	host2num("src")
+	host2num("dst")
+
 	if "0.0.0.0/0" in args.addr and not args.any and not args.noany:
+		srcip = arr[7]
+		srcmask = arr[8]
+		dstip = arr[9]
+		dstmask = arr[10]
 		print_acl()
 	else:
 		for searchip in ips:
