@@ -23,15 +23,22 @@ Important! This program set is under active development. Hence expect bugs. Plea
 * Expect (for the data collector)
 * Python 2.7
 * Netaddr
+* pprint (it can be replaced with print in the `debug` function)
 
 Install netaddr:
 
 ```sh
-pip install netaddr
+pip install netaddr pprint
 ```
 ## Limitations
 
-IPv6, NAT, source ports and multiple contexts are not supported.
+The following is not supported:
+
+* IPv6
+* NAT
+* source ports 
+* multiple contexts
+* groups generation (in the developing process)
 
 ## TODO
 
