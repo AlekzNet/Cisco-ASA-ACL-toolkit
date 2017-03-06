@@ -23,12 +23,11 @@ Important! This program set is under active development. Hence expect bugs. Plea
 * Expect (for the data collector)
 * Python 2.7
 * Netaddr
-* pprint (it can be replaced with print in the `debug` function)
 
 Install netaddr:
 
 ```sh
-pip install netaddr pprint
+pip install netaddr
 ```
 ## Limitations
 
