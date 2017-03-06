@@ -1,7 +1,7 @@
 # Cisco-ASA-ACL-toolkit
 Utilities for parsing, analyzing, modifying and generating Cisco ASA ACLs. Useful for troubleshooting, migrating a subset of rules to another firewall, removing overlapping rules, rules aggregation, converting the rule base to HTML, migrating to FortiGate, etc.
 
-Important! This program set is under active development. Hence expect bugs. Please check the repository frequently. And do test before using in the production environment!
+Important! This program set is under active development. Hence expect bugs. Please check the repository frequently, and do test before using in the production environment!
 
 ## Files
 
