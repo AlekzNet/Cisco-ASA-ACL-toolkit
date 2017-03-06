@@ -33,6 +33,14 @@ pip install netaddr
 
 IPv6, NAT, source ports and multiple contexts are not supported.
 
+## TODO
+
+* Cisco ACL generation using grouped policy. Currently genacl.py can use the grouped rules to produce Fortigate policy. 
+* Rewrite ipaclmatch.py. It was written to quickly solve particular tasks. Adding new features created a mess.
+* I have one more optimization method in mind, but to implement it optimacl.py should be rewritten.
+* Add recrsive group generation for all devices in genacl.py
+
+
 ## Data collecting
 
 * Edit asa.list and place a list of the firewall IP-addresses and firewall hostnames (as in the ASA config). No empty lines.
