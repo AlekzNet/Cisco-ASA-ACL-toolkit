@@ -185,14 +185,15 @@ ra.add_argument('--range', default=True, help="Replace lt, gt, and neq with rang
 ra.add_argument('--norange', default=False, help="Replace lt, gt, and neq with \<, \>, and ! symbols", action="store_true")
 parser.add_argument('--direct', help="Direct IP match only" , action="store_true")
 parser.add_argument('-t','--transform', help='Transform the output. Must be used with either -s or -d and with either --deny or --permit', action="store_true")
-parser.add_argument('-r','--replace', help='Replace the container networks with the matching IP-address from --addr', action="store_true")
+parser.add_argument('-r','--replace', help='Replace the container networks with the matching IP-address from --addr.\n\
+	Works with --policy and --src or --dst. No effect with --direct, --both, --transform, --contain, --any', action="store_true")
 parser.add_argument('-p','--policy', help='Print the policy in the form:\n SourceIP SourceMask DestIP DestMask Proto:Port. Must be used with either --deny or --permit', action="store_true")
 parser.add_argument('--contain', help='Direct matches and subnets (not direct and uppernets). Assumes --noany', action="store_true")
-parser.add_argument('--noline', help='Removes line number from the output', action="store_true")
+parser.add_argument('--noline', help='Removes line numbers from the output', action="store_true")
 args = parser.parse_args()
 
 if not args.src and not args.dst and not args.both: args.both = True
-if "all" in args.addr: args.addr="0.0.0.0/0"
+if "all" in args.addr or "any" in args.addr: args.addr="0.0.0.0/0"
 if "0.0.0.0/0" in args.addr and not args.any: args.contain=True
 if args.both and args.transform:
 	print >>sys.stderr, "--transform requires either --src or --dst. --transform cannot be used with --both"
