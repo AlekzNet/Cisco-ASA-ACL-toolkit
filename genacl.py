@@ -117,6 +117,10 @@ class FW():
 	'General Firewall Class'
 	devtype='' #Device type
 	rulenum = 0
+	netgrp_name='obj_net_' # Template for network object-group
+	netgrp_cnt=0 # network object-group counter shift
+	srvgrp_name='obj_srv_' # Template for service object-group
+	srvgrp_cnt=0 # service object-group counter shift
 
 	def fw_netobj_print(self,netobj):
 		pass
@@ -127,7 +131,13 @@ class FW():
 	def netobj_add(self,netobj,rule):
 		pass
 
+	def netgrp_add(self,netgrp,rule):
+		pass
+
 	def srvobj_add(self,srvobj,rule):
+		pass
+
+	def srvgrp_add(self,srvgrp,rule):
 		pass
 
 class FGT(FW):
@@ -136,17 +146,19 @@ class FGT(FW):
 	vdom = ''
 	srcintf = ''
 	dstintf = ''
+	mingrp=0 #minimalamount of objects ib the rule to move in a separate group
 
 	re_any = re.compile('any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
 
 	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
 
-	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000, label=''):
+	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000, label='', mg='0'):
 		self.vdom = vdom
 		self.srcintf = srcintf
 		self.dstintf = dstintf
 		self.rulenum=rulenum
 		self.label=label
+		self.mingrp=mg
 
 	def rprint(self,policy):
 		if self.vdom:
@@ -245,10 +257,7 @@ class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
 	aclname='' #ACL name
-	netobj_name='obj_net_' # Template for network object-group
-	netobj_cnt=0 # network object-group counter shift
-	srvobj_name='obj_srv_' # Template for service object-group
-	srvobj_cnt=0 # service object-group counter shift
+
 
 	def __init__(self,aclname='Test_ACL',rulenum=0):
 		self.aclname=aclname
@@ -261,7 +270,7 @@ class ASA(FW):
 
 	def rule_proto(self,rule):
 		if len(rule.srv) > 1:
-			return 'object-group ' + policy.srvobj[tuple(rule.srv)]
+			return 'object-group ' + policy.srvgrp[tuple(rule.srv)]
 		else:
 			return self.protocol(rule.srv[0])
 
@@ -281,14 +290,14 @@ class ASA(FW):
 
 	def rule_addr(self,addr):
 		if len(addr) > 1:
-			return 'object-group ' + policy.netobj[tuple(addr)]
+			return 'object-group ' + policy.netgrp[tuple(addr)]
 		else:
 			return addr[0]
 
 	def rprint(self,policy):
 		self.fw_header_print()
-		self.fw_netobj_print(policy.netobj)
-		self.fw_srvobj_print(policy.srvobj)
+		self.fw_netgrp_print(policy.netobj)
+		self.fw_srvgrp_print(policy.srvobj)
 		self.fw_rules_print(policy)
 		self.fw_footer_print()
 
@@ -299,15 +308,15 @@ class ASA(FW):
 		print 'wri'
 		print 'exit'
 
-	def fw_netobj_print(self,netobj):
-		for addrs in netobj:
-			print 'object-group network',netobj[tuple(addrs)]
+	def fw_netgrp_print(self,netgrp):
+		for addrs in netgrp:
+			print 'object-group network',netgrp[tuple(addrs)]
 			for addr in addrs:
 				print ' network-object',addr
 
-	def fw_srvobj_print(self,srvobj):
-		for svcs in srvobj:
-			print 'object-group service',srvobj[tuple(svcs)]
+	def fw_srvgrp_print(self,srvgrp):
+		for svcs in srvgrp:
+			print 'object-group service',srvgrp[tuple(svcs)]
 			for svc in svcs:
 				if 'icmp' in self.protocol(svc):
 					print ' service-object',self.protocol(svc),'icmp_type',self.port(svc)
@@ -341,19 +350,19 @@ class ASA(FW):
 		else:
 			return ''
 
-	def netobj_add(self,netobj,rule):
+	def netgrp_add(self,netgrp,rule):
 		for addrs in rule.src,rule.dst:
 			if len(addrs) > 1:
-				if tuple(addrs) not in netobj:
-					objname=self.netobj_name+str(len(netobj)+1+self.netobj_cnt)
-					netobj[tuple(addrs)]=objname
+				if tuple(addrs) not in netgrp:
+					objname=self.netgrp_name+str(len(netgrp)+1+self.netgrp_cnt)
+					netgrp[tuple(addrs)]=objname
 
 
-	def srvobj_add(self,srvobj,rule):
+	def srvgrp_add(self,srvgrp,rule):
 		if len(rule.srv) > 1:
-			if tuple(rule.srv) not in srvobj:
-				objname=self.srvobj_name+str(len(srvobj)+1+self.srvobj_cnt)
-				srvobj[tuple(rule.srv)]=objname
+			if tuple(rule.srv) not in srvgrp:
+				objname=self.srvgrp_name+str(len(srvgrp)+1+self.srvgrp_cnt)
+				srvgrp[tuple(rule.srv)]=objname
 
 
 class Policy(PRule):
@@ -380,7 +389,9 @@ class Policy(PRule):
 	def get_objects(self):
 		for rule in self.policy:
 			self.device.netobj_add(self.netobj,rule)
+			self.device.netgrp_add(self.netgrp,rule)
 			self.device.srvobj_add(self.srvobj,rule)
+			self.device.srvgrp_add(self.srvgrp,rule)
 
 	def rprint(self):
 		self.get_objects()
