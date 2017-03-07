@@ -4,7 +4,7 @@ import string
 import argparse
 import re
 import sys
-#import pprint
+import pprint
 
 try:
 	import netaddr
@@ -249,20 +249,62 @@ class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
 	aclname='' #ACL name
+	netobj_name='obj_net_' # Template for network object-group
+	netobj_cnt=0 # network object-group counter shift
+	srvobj_name='obj_srv_' # Template for service object-group
+	srvobj_cnt=0 # service object-group counter shift
 
 	def __init__(self,aclname='Test_ACL'):
 		self.aclname=aclname
 
-	def fw_rule_print(self,rule):
-		print  " ".join(["access-list", self.aclname, "extended", self.protocol(rule.srv[0]), \
-		rule.src[0], rule.dst[0], self.port(rule.srv[0])])
+	def fw_rules_print(self,policy):
+		for rule in policy.policy:
+			print  ' '.join(["access-list", self.aclname, "extended", self.rule_proto(rule), \
+				self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule)])
+
+	def rule_proto(self,rule):
+		if len(rule.srv) > 1:
+			return 'object-group ' + policy.srvobj[tuple(rule.srv)]
+		else:
+			return self.protocol(rule.srv[0])
+
+	def rule_port(self,rule):
+		if len(rule.srv) > 1:
+			return ''
+		else:
+			return self.port(rule.srv[0])
+
+	def rule_addr(self,addr):
+		if len(addr) > 1:
+			return 'object-group ' + policy.netobj[tuple(addr)]
+		else:
+			return addr[0]
 
 	def rprint(self,policy):
-#		self.fw_netobj_print(policy.netobj)
-#		self.fw_srvobj_print(policy.srvobj)
-		for rule in policy.policy:
-			self.fw_rule_print(rule)
+		self.fw_header_print()
+		self.fw_netobj_print(policy.netobj)
+		self.fw_srvobj_print(policy.srvobj)
+		self.fw_rules_print(policy)
+		self.fw_footer_print()
 
+	def fw_header_print(self):
+		print 'config terminal'
+
+	def fw_footer_print(self):
+		print 'wri'
+		print 'exit'
+
+	def fw_netobj_print(self,netobj):
+		for addrs in netobj:
+			print 'object-group network',netobj[tuple(addrs)]
+			for addr in addrs:
+				print ' network-object',addr
+
+	def fw_srvobj_print(self,srvobj):
+		for svcs in srvobj:
+			print 'object-group service',srvobj[tuple(svcs)]
+			for svc in svcs:
+				print ' service-object',self.protocol(svc),'destination',self.port(svc)
 
 	def protocol(self,service):
 		if "*" in service:
@@ -290,6 +332,20 @@ class ASA(FW):
 				return tmp[1]
 		else:
 			return ''
+
+	def netobj_add(self,netobj,rule):
+		for addrs in rule.src,rule.dst:
+			if len(addrs) > 1:
+				if tuple(addrs) not in netobj:
+					objname=self.netobj_name+str(len(netobj)+1+self.netobj_cnt)
+					netobj[tuple(addrs)]=objname
+
+
+	def srvobj_add(self,srvobj,rule):
+		if len(rule.srv) > 1:
+			if tuple(rule.srv) not in srvobj:
+				objname=self.srvobj_name+str(len(srvobj)+1+self.srvobj_cnt)
+				srvobj[tuple(rule.srv)]=objname
 
 
 class Policy(PRule):
