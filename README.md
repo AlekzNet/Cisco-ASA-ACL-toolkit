@@ -42,7 +42,7 @@ The following is not supported:
 
 * Rewrite ipaclmatch.py. It was written to quickly solve particular tasks. Adding new features created a mess.
 * I have one more optimization method in mind, but to implement it optimacl.py should be rewritten.
-* Add recrsive group generation for all devices in genacl.py
+* Add recursive group generation for all devices in genacl.py
 
 
 ## Data collecting
@@ -63,7 +63,7 @@ The following is not supported:
 
 ## Examples
 
-Show the amount of matching ACLs for the IPs found in the source and destination. See asasearch.sh for used parameters. The script processes 3mln entries in ~7min (two passes).
+Show the amount of matching ACLs for the IPs found in the source and destination. See asasearch.sh for used parameters. The script processes 4.5mln entries in ~7min (two passes: one for source, one for destination).
 
 ```txt
 ./asasearch.sh 10.1.0.0/16             
