@@ -37,11 +37,9 @@ The following is not supported:
 * NAT
 * source ports 
 * multiple contexts
-* groups generation (in the developing process)
 
 ## TODO
 
-* Cisco ACL generation using grouped policy. Currently genacl.py can use the grouped rules to produce Fortigate policy. 
 * Rewrite ipaclmatch.py. It was written to quickly solve particular tasks. Adding new features created a mess.
 * I have one more optimization method in mind, but to implement it optimacl.py should be rewritten.
 * Add recrsive group generation for all devices in genacl.py
