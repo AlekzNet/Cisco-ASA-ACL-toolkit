@@ -253,13 +253,14 @@ class ASA(FW):
 	netobj_cnt=0 # network object-group counter shift
 	srvobj_name='obj_srv_' # Template for service object-group
 	srvobj_cnt=0 # service object-group counter shift
+	action='permit' #default action
 
 	def __init__(self,aclname='Test_ACL'):
 		self.aclname=aclname
 
 	def fw_rules_print(self,policy):
 		for rule in policy.policy:
-			print  ' '.join(["access-list", self.aclname, "extended", self.rule_proto(rule), \
+			print  ' '.join(["access-list", self.aclname, "extended", self.action, self.rule_proto(rule), \
 				self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule)])
 
 	def rule_proto(self,rule):
