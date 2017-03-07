@@ -37,6 +37,7 @@ The following is not supported:
 * NAT
 * source ports 
 * multiple contexts
+* Mixed Permit and Deny rules in optimacl.py
 
 ## TODO
 
