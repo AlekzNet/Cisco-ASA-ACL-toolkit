@@ -311,8 +311,8 @@ class ASA(FW):
 
 	def rprint(self,policy):
 		self.fw_header_print()
-		self.fw_netgrp_print(policy.netobj)
-		self.fw_srvgrp_print(policy.srvobj)
+		self.fw_netgrp_print(policy.netgrp)
+		self.fw_srvgrp_print(policy.srvgrp)
 		self.fw_rules_print(policy)
 		self.fw_footer_print()
 
