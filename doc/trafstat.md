@@ -1,6 +1,6 @@
 ## trafacl.sh
 
-Analyses Cisco ASA logs and generates allowed traffic statstics (per ACL):
+Analyses Cisco ASA logs and generates allowed traffic statistics (per ACL):
 
 * List of used ACL's
 * Total amount of connections
@@ -10,7 +10,15 @@ Analyses Cisco ASA logs and generates allowed traffic statstics (per ACL):
 * List of source IP-addresses, sorted by amount of initiated connections
 * List of destination IP-addresses, sorted by amount of connections
 
-The script can be used to generate a firewall policy based on the real traffic. 
+The script can be used to generate a firewall policy based on the real traffic.  
+
+#### Performance
+
+* Intel(R) Xeon(R) L5530@2.40GHz
+* 10.7GB log file (50M lines)
+* ~40 minutes
+
+Other programming languages might "produce" a better result, but in my case only the basic UNIX utilities were available.
 
 ### Usage: 
 
