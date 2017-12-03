@@ -29,4 +29,19 @@ access-group outside-in in interface outside
 trafstat.sh asa.log asa.log.1 asa.log.2
 ```
 
+#### Result:
+
+The script creates a new directory with the name based on the current date and time (e.g. `20171202_2305`) with the following files:
+
+* acl.stat - total amount of connections, and percentages from the total amount
+
+`ACL_name Amount 0.01%   0.02%   0.1%   0.2%`
+```txt
+inside-in	2302601	230	460	2302	4605
+outside-in	1031961	103	206	1031	2063
+```
+In this case, 0.01% from 2302601 is 230
+
+* 
+
 
