@@ -72,3 +72,12 @@ In this case, 0.01% from 2302601 is 230
 
 * similar files for other ACL's
 
+#### Inspect and edit the generatedfiles
+
+#### Remove the first column
+
+#### Use [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) and [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) to generate new ACLs without logging
+
+#### Apply the new ACLs on top of the `permit any any log` rule
+
+#### Repeat the procedure above or replace the "allow any" rule with "deny any any log" 
