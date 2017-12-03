@@ -1,4 +1,4 @@
-## trafacl.sh
+## trafstat.sh
 
 Analyses Cisco ASA logs and generates allowed traffic statistics (per ACL):
 
