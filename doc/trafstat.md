@@ -14,7 +14,9 @@ The script can be used to generate a firewall policy based on the real traffic.
 
 #### Performance
 
+* Syslog server
 * Intel(R) Xeon(R) L5530 (2.40GHz)
+* 12GB RAM
 * 10.77GB log file (50.8M lines)
 * ~40 minutes
 
