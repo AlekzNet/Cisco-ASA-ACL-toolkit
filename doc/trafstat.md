@@ -14,11 +14,20 @@ The script can be used to generate a firewall policy based on the real traffic.
 
 #### Performance
 
-* Intel(R) Xeon(R) L5530@2.40GHz
-* 10.7GB log file (50M lines)
+* Intel(R) Xeon(R) L5530 (2.40GHz)
+* 10.77GB log file (50.8M lines)
 * ~40 minutes
 
-Other programming languages might "produce" a better result, but in my case only the basic UNIX utilities were available.
+Other programming languages might "produce" a better result, but in my case only the basic (and the best ;) ) UNIX utilities were available. For comparison, it takes `wc -l` almost 2min to count the lines on this system:
+
+```txt
+# time wc -l asa.log.1
+50824061 asa.log.1
+
+real    1m53.041s
+user    0m4.670s
+sys     0m8.813s
+```
 
 ### Usage: 
 
