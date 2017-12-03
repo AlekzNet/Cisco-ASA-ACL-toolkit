@@ -6,16 +6,16 @@ Important! This program set is under active development. Hence expect bugs. Plea
 ## Files
 
 * asa.sh - Shell script to remotely collect Cisco ASA configs
-* asa.exp - Expect script to remotely get and save the configuration, access-groups and access lists
-* asa.list - list of Cisco ASA firewall IP's and hostnames 
-* asaconf.py - converts ACLs from ASA config file into HTML
+* asa.exp - Expect script to remotely get and save ASA configuration, access-groups and access lists
+* asa.list - list of Cisco ASA firewall IP's and hostnames (to download te config from or upload to)
+* asaconf.py - converts ACLs from ASA config file to HTML or `show access-list` result
 * asasort.sh - sort and separate ACLs by name. 
-* asasearch.sh - search rules with matching IPaddresses (first in src, then dst) in all ACLs
+* asasearch.sh - searches rules with matching IPaddresses (first in src, then dst) in all ACLs
 * combine.sh - same as asasearch.sh, but it combines all similarly named ACLs across directories together
 * test.acl - test ACL
 * [ipaclmatch.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/ipaclmatch.md) - utility to search for rules matching IP-addresses, the networks they belong to, subnetworks, and generate a proto-policy.
 * [optimacl-simple.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl-simple.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Works with either the source or destination IP-addresses.
-* [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Supports full polisy (src dst srv)
+* [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Supports full policy (src dst srv)
 * [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) - utility to generate ASA ACL's or FortiGate policy from a proto-policy
 * [trafstat.sh](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/trafstat.md) - analyses Cisco ASA logs and generates allowed traffic statstics (per ACL)
 
