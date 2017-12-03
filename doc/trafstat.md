@@ -14,7 +14,7 @@ The script can be used to generate a firewall policy based on the real traffic.
 
 ### Usage: 
 
-#### Configure access-control lists allowing and logging all traffic:
+#### 1. Configure access-control lists allowing and logging all traffic:
 
 ```txt
 access-list inside-in extended permit ip any any log
@@ -23,13 +23,13 @@ access-group inside-in in interface inside
 access-group outside-in in interface outside
 ```
 
-#### On the syslog server run the script with the Cisco ASA log files as the arguments:
+#### 2. On the syslog server run the script with the Cisco ASA log files as the arguments:
 
 ```txt
 trafstat.sh asa.log asa.log.1 asa.log.2
 ```
 
-#### Result:
+##### Result:
 
 The script creates a new directory with the name based on the current date and time (e.g. `20171202_2305`) with the following files:
 
@@ -72,12 +72,12 @@ In this case, 0.01% from 2302601 is 230
 
 * similar files for other ACL's
 
-#### Inspect and edit the generatedfiles
+#### 3. Inspect and edit the generated stat files
 
-#### Remove the first column
+#### 4. Remove the first column
 
-#### Use [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) and [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) to generate new ACLs without logging
+#### 5. Use [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) and [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) to generate new ACLs without logging
 
-#### Apply the new ACLs on top of the `permit any any log` rule
+#### 6. Apply the new ACLs on top of the `permit any any log` rule
 
-#### Repeat the procedure above or replace the "allow any" rule with "deny any any log" 
+#### 7. Repeat the procedure above or replace the "allow any" rule with "deny any any log" 
