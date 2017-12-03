@@ -57,7 +57,7 @@ In this case, 0.01% from 2302601 is 230
 
 * inside-in.10 - same as above but with amount of connection larger, than THOLD (10)
 
-* inside-in.18 - same as above but with amount of connection larger, than 0.01% from the total amount (18 in this case)
+* inside-in.230 - same as above but with amount of connection larger, than 0.01% from the total amount (230 in this case)
 
 * inside-in.topd - destination IP addresses sorted by amount
 
