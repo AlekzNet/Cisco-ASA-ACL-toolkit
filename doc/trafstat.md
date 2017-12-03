@@ -42,6 +42,33 @@ outside-in	1031961	103	206	1031	2063
 ```
 In this case, 0.01% from 2302601 is 230
 
-* 
+* inside-in - amount of established connections per session
 
+`Amount Source_IP Destination_IP Protocol:Port`
+
+```txt
+10527 10.2.3.12 8.8.8.8 udp:53
+9526 10.2.3.14 8.8.8.8 udp:53
+9507 10.2.3.11 8.8.8.8 udp:53
+9305 10.2.3.12 193.57.16.39 tcp:443
+5840 10.2.3.11 193.57.16.38 tcp:443 
+. . .
+```
+
+* inside-in.10 - same as above but with amount of connection larger, than THOLD (10)
+
+* inside-in.18 - same as above but with amount of connection larger, than 0.01% from the total amount (18 in this case)
+
+* inside-in.topd - destination IP addresses sorted by amount
+
+```txt
+66930  8.8.8.8
+34597  193.19.80.29
+18062  193.57.16.39
+17107  193.57.16.38
+```
+
+* inside-in.tops - destination IP addresses sorted by amount
+
+* similar files for other ACL's
 
