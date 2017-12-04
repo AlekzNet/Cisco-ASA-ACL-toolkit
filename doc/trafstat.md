@@ -21,15 +21,14 @@ The script can be used to generate a firewall policy based on the real traffic.
 * 10.77GB log file (50.8M lines)
 * ~40 minutes
 
-Other programming languages might "produce" a better result, but in my case only the basic (and the best ;) ) UNIX utilities were available. For comparison, it takes `wc -l` almost 2min to count the lines on this system:
+Other programming languages might "produce" a better result, but in my case only the basic (and the best ;) ) UNIX utilities were available. For comparison, it takes almost 2min just to read the file on this system:
 
 ```txt
-# time wc -l asa.log.1
-50824061 asa.log.1
+# time cat asa.log.1 > /dev/null
 
-real    1m53.041s
-user    0m4.670s
-sys     0m8.813s
+real    1m57.957s
+user    0m2.657s
+sys     0m5.779s
 ```
 
 ### Usage: 
