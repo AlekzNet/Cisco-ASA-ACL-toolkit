@@ -20,7 +20,6 @@ cl ) printf("%s %d %d %d %d %d\n",i,acl[i],acl[i]/10000,acl[i]/5000,acl[i]/1000,
 
 echo "ACL    Count  0.01%   0.02%   0.1%   0.2%"
 cat  ${DIR}/acl.stat
-echo $ACLS
 
 for i in $ACLS
 do
