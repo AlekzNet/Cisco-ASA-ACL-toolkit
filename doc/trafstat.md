@@ -19,7 +19,8 @@ The script can be used to generate a firewall policy based on the real traffic.
 * Intel(R) Xeon(R) L5530 (2.40GHz)
 * 12GB RAM
 * 10.77GB log file (50.8M lines)
-* ~40 minutes
+* 5 ACL groups
+* ~20 minutes
 
 Other programming languages might "produce" a better result, but in my case only the basic (and the best ;) ) UNIX utilities were available. For comparison, it takes almost 2min just to read the file on this system:
 
