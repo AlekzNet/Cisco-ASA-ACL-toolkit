@@ -9,7 +9,7 @@ Analyses Cisco ASA logs and generates allowed traffic statistics (per ACL):
 * List of all connections, sorted by amount, with at least 0.01% from the total sessions
 * List of source IP-addresses, sorted by amount of initiated connections
 * List of destination IP-addresses, sorted by amount of connections
-* Traffic to high ports (>32768) and ICMP are ignored
+* Traffic to high ports (>32768) and ICMP packets are ignored
 
 The script can be used to generate a firewall policy based on the real traffic.  
 
@@ -22,7 +22,7 @@ The script can be used to generate a firewall policy based on the real traffic.
 * 5 ACL groups
 * ~20 minutes
 
-Other programming languages might "produce" a better result, but in my case only the basic (and the best ;) ) UNIX utilities were available. For comparison, it takes almost 2min just to read the file on this system:
+Other programming languages might "produce" better results, but in my case only the basic (and the best ;) UNIX utilities were available. For comparison, it takes almost 2min just to read the file on this system:
 
 ```txt
 # time cat asa.log.1 > /dev/null
@@ -97,13 +97,13 @@ In this case, 0.01% from 2302601 is 230
 #### 4. Remove the first column
 
 ```txt
-cat inside-in | awk '{print $2, $3, $4;)'
-``
+cat inside-in | awk '{print $2, $3, $4}'
+```
 
 #### 5. Use [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) and [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) to generate new ACLs without logging
 
 ```txt
-cat inside-in | awk '{print $2, $3, $4;)' | optimacl.py | genacl.py
+cat inside-in | awk '{print $2, $3, $4}' | optimacl.py | genacl.py
 ```
 
 #### 6. Apply the new ACLs on top of the `permit any any log` rule
