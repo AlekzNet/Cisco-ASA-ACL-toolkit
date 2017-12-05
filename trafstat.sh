@@ -30,7 +30,7 @@ do
 
         cat $FILES | egrep -v icmp |  egrep "access-list $i permitted" | sed -e 's/^.*permitted //' | sed -e 's/ hit-cnt.*$//' | sed -e 's%(.
 */% %' | sed -e 's/^ //' | sed -e 's% .*/% %' | sed -e 's/(\(.*\))/ \1/' | awk '{ if ($4 < 32768) {conn[$0]++;} } END { for ( i in conn ) print conn[i],"",i;}' 
-| sort +0nr  | awk '{printf("%d %s %s %s:%d\n",$1,$3,$4,$2,$5);}' >>  ${DIR}/$i
+| sort +0nr  | awk '{printf("%d %s %s %s:%d\n",$1,$3,$4,$2,$5);}' >  ${DIR}/$i
 
         set `grep $i ${DIR}/acl.stat`
         cat ${DIR}/$i | awk ' {conn[$2] += $1;} END {for ( i in conn ) print conn[i],"",i;}' | sort +0nr > ${DIR}/${i}.tops
