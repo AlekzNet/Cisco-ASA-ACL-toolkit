@@ -92,6 +92,13 @@ In this case, 0.01% from 2302601 is 230
 
 * similar files for other ACL's
 
+* The results can be converted to HTML:
+
+```txt
+% cd 20180103_0211
+% ../genhtml.sh inside-in.10 outside-in > output.html
+```
+
 #### 3. Inspect and edit the generated stat files
 
 #### 4. Remove the first column
