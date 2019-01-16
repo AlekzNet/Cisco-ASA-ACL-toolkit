@@ -9,7 +9,7 @@ import pprint
 try:
 	import netaddr
 except ImportError:
-	print >>sys.stderr, 'ERROR: netaddr module not found.'
+	print >>sys.stderr, 'ERROR: netaddr module not found, you can install it with \"pip install netaddr\"'
 	sys.exit(1)
 
 def debug(string,level=1):
