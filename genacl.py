@@ -415,6 +415,7 @@ class Policy(PRule):
 
 parser = argparse.ArgumentParser(description='Creates Cisco ASA or Fortigate policy')
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console (default)")
+parser.add_argument('-v','--verbose', default=0, help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv', action='count')
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or object name")
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
