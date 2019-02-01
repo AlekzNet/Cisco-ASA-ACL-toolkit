@@ -12,6 +12,12 @@ except ImportError:
 	print >>sys.stderr, 'ERROR: netaddr module not found, you can install it with \"pip install netaddr\"'
 	sys.exit(1)
 
+try:
+	import pprint
+except ImportError:
+	print >>sys.stderr, 'ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace pprint.pprint with print (the debug function)'
+	sys.exit(1)
+
 def debug(string,level=1):
 	if args.verbose >= level:
 		pprint.pprint(string,sys.stderr,width=70)
@@ -20,13 +26,32 @@ def cidr2str(addr):
 	tmp = netaddr.IPNetwork(addr)
 	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
-def str2cidr(addr):
-	return str(netaddr.IPNetwork(re.sub(' ','/',addr)))
+# Create object names:
+# h-001.020.003.004  -- for hosts
+# n-001.020.003.000_24 -- for networks			
+# net - netaddr.IPNetwork(ip)
+def net2name(ip):
+	net=str(ip.network)
+	mask=str(ip.prefixlen)
+	if ishost(ip): return 'h-'+ip2txt(net)
+	else: return 'n-'+ip2txt(net)+'_'+mask
 
-def net2name(net):
-	ip,mask=str2cidr(net).split('/')
-	if '32' in mask: return 'h-'+ip
-	else: return 'n-'+ip+'_'+mask
+# ip - string IP-address -- 1.2.3.4
+# returns - 001.002.003.004
+def ip2txt(ip):
+	return ".".join(map(octet2txt,ip.split('.')))
+
+# octet - string of 0...255 (e.g. 12, 1, 123)
+# returns 012, 001, 123
+def octet2txt(octet):
+	if len(octet) < 3:
+		octet = "0" + octet if len(octet) == 2 else "00" + octet
+	return octet
+
+# Returns True if the netmask is 32, and False otherwise
+# ip is a netaddr object
+def ishost(ip):
+	return True if ip.prefixlen == 32 else False
 
 class PRule:
 	'Class for a rule prototype'
@@ -35,19 +60,20 @@ class PRule:
 	re_dig=re.compile('^\d')
 	re_nondig=re.compile('^\D')
 
-	def __init__(self,line,):
+	def __init__(self,line):
 		self.line=line.strip()
+		debug(self.line,2)
 		self.parse()
 
 	def check_arr(self,arr):
 		if not len(arr):
-			print >>sys.stderr, self.line
-			print >>sys.stderr, "Too few fields in the policy."
+			debug(self.line,0)
+			debug("Too few fields in the policy.",0)
 			sys.exit(1)
 
 	def parse_addr(self,arr):
 		if 'any' in  arr[0]:
-			addr='any'
+			addr=['any']
 			del arr[0]
 		elif not ',' in arr[0]:
 			if '/' in arr[0]:
@@ -82,6 +108,7 @@ class PRule:
 
 		# Get the first address
 		addr1=self.parse_addr(arr)
+		debug("addr1 is %s" % addr1,3)
 		self.check_arr(arr)
 
 		if self.re_dig.match(arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
@@ -251,7 +278,7 @@ class FGT(FW):
 				if addr not in netobj:
 					if self.re_any.search(addr):
 						netobj[addr]  = 'all'
-					else: netobj[addr] = net2name(addr)
+					else: netobj[addr] = net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
 
 	def srvobj_add(self,srvobj,rule):
 		services = rule.srv
