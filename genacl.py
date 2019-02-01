@@ -4,7 +4,6 @@ import string
 import argparse
 import re
 import sys
-import pprint
 
 try:
 	import netaddr
@@ -22,7 +21,10 @@ def debug(string,level=1):
 	if args.verbose >= level:
 		pprint.pprint(string,sys.stderr,width=70)
 
+# addr = IP/mask
+# return = 1.2.3.4 255.255.255.255
 def cidr2str(addr):
+	debug("cidr2str -- addr = %s" % addr,4)
 	tmp = netaddr.IPNetwork(addr)
 	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
@@ -56,22 +58,43 @@ def ishost(ip):
 class PRule:
 	'Class for a rule prototype'
 
-	re_any=re.compile('^any$', re.IGNORECASE)
-	re_dig=re.compile('^\d')
-	re_nondig=re.compile('^\D')
+	re_any=re.compile(r'^any$', re.IGNORECASE)
+	re_dig=re.compile(r'^\d')
+	re_nondig=re.compile(r'^\D')
+	re_spaces=re.compile(r'\s+')
+	re_comma=re.compile(r'\s*,\s*')
 
-	def __init__(self,line):
-		self.line=line.strip()
+# line (str) - policy line
+# deny (boolean) - by default the action is "allow", unless there is an explicit "deny" in the line
+# 		 if deny is set to True, the action will be "deny"
+	def __init__(self,line,deny=False):
+		self.src=[]
+		self.dst=[]
+		self.srv=[]
+		self.action="deny" if deny else "permit"
+		self.comment=""
+		self.line=self.cleanup(line)
 		debug(self.line,2)
 		self.parse()
 
+	def cleanup(self,line):
+		line=line.strip()
+		debug("Before clean-up: %s" % line,3)
+		line=self.re_spaces.sub(" ",line)
+		line=self.re_comma.sub(",",line)
+		return line
+		
 	def check_arr(self,arr):
 		if not len(arr):
 			debug(self.line,0)
 			debug("Too few fields in the policy.",0)
 			sys.exit(1)
 
+# arr -- takes a list, extracts the next address(es), removes the elements from the list
+# returns a list of addresses
 	def parse_addr(self,arr):
+		debug("parse_addr -- arr", 3)
+		debug(arr,4)
 		if 'any' in  arr[0]:
 			addr=['any']
 			del arr[0]
@@ -79,6 +102,9 @@ class PRule:
 			if '/' in arr[0]:
 				addr = [cidr2str(arr[0])]
 				del arr[0]
+			elif '0.0.0.0' in arr[0] and '0.0.0.0' in arr[1]:
+				addr=['any']
+				del arr[0:2]
 			else:
 				addr = [' '.join(arr[0:2])]
 				del arr[0:2]
@@ -86,8 +112,11 @@ class PRule:
 			addr = [cidr2str(x) for x in arr[0].split(',')]
 			addr.sort()
 			del arr[0]
+		debug("parse_addr - addr = %s" % addr,3)
 		return addr
 
+# used when inly the source or destination IP-addresses are used in the line
+# returns a list of one IP-address
 	def parse_addr_args(self,addr):
 		if '/' in addr:
 			return [cidr2str(addr)]
@@ -104,7 +133,7 @@ class PRule:
 		addr1=''
 		addr2=''
 
-		arr=line.split()
+		arr=self.line.split()
 
 		# Get the first address
 		addr1=self.parse_addr(arr)
@@ -113,6 +142,7 @@ class PRule:
 
 		if self.re_dig.match(arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
 			addr2=self.parse_addr(arr)
+			debug("addr2 is %s" % addr2,3)
 			self.check_arr(arr)
 
 		if not ',' in arr[0]:
@@ -123,8 +153,6 @@ class PRule:
 		del arr[0]
 
 		if len(arr): self.action = arr[0]
-		elif not args.deny: self.action = 'permit'
-		else: self.action = 'deny'
 
 		if addr2:
 			self.src = addr1
@@ -139,6 +167,13 @@ class PRule:
 			debug(self.line,0)
 			debug("Either too few fields or define either --src IP or --dst IP",0)
 			sys.exit(1)
+		debug("Src = %s" % self.src,2)
+		debug("Dst = %s" % self.dst,2)
+		debug("Srv = %s" % self.srv,2)
+		debug("Action = %s" % self.action,2)
+		debug("Comment = %s" % self.comment,2)
+		
+	
 
 class FW():
 	'General Firewall Class'
@@ -175,7 +210,7 @@ class FGT(FW):
 	vdom = ''
 	srcintf = ''
 	dstintf = ''
-	mingrp=0 #minimalamount of objects ib the rule to move in a separate group
+	mingrp=0 #minimal amount of objects in the rule to move in a separate group
 
 	re_any = re.compile('any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
 
@@ -409,7 +444,7 @@ class ASA(FW):
 
 class Policy(PRule):
 	'Class for the whole policy'
-	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-10.0.1.0_24' }
+	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-010.000.001.000_24' }
 	srvobj = {} # { 'tcp:20-23': 'TCP-20-23' }
 	netgrp = {}	# { 'net-group1: }network-groups
 	srvgrp = {}	# service-groups
@@ -480,7 +515,7 @@ else:
 policy = Policy(dev)
 
 for line in f:
-	r=PRule(line)
+	r=PRule(line,args.deny)
 	policy.addrule(r)
 
 policy.rprint()
