@@ -8,9 +8,18 @@ IP-address Netmask Protocol:Port
 or
 
 ```txt
-SrcIP SrcMask DstIP DstMask Protocol:Port [Action]
+SrcIP SrcMask DstIP DstMask Protocol:Port [Action] [#Comment]
 ```
-IP addresses and netmasks must be in the format `a.b.c.d e.f.g.h` (e.g. 0.0.0.0 0.0.0.0 for "any")
+IP addresses and netmasks can be in the following format 
+
+```txt
+0.0.0.0 0.0.0.0
+any
+host 1.2.3.4
+2.3.4.5/32
+2.3.4.5 255.255.255.255
+3.4.5.0/24
+```
 
 Services can have the following forms (more possible formats to follow :
 ```txt
@@ -48,23 +57,45 @@ Considering the following proto-policy:
 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 udp:53 deny
 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 udp:53
 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 udp:20000-30000
+  # This is a comment
 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 *
 0.0.0.0 0.0.0.0 10.3.10.0 255.255.255.0 udp:30000-65535
-0.0.0.0 0.0.0.0 0.0.0.0 0.0.0.0 * deny
+1.2.3.4,1.2.3.5/32 5.6.7.0/24,5.6.8.0/24 tcp:443
+1.2.3.4,  1.2.3.5/32 		5.6.7.0/24  , 5.6.8.0/24	 tcp:80
+any 10.3.11.0 255.255.255.0 tcp:22
+11.2.3.0 255.255.255.0 any tcp:23
+0.0.0.0 0.0.0.0 0.0.0.0 0.0.0.0 * deny #Deny the rest
 ```
+
 
 default settings will produce the following output:
 
 ```txt
-cat test-pol.acl | genacl.py
-access-list Test_ACL extended permit tcp 10.228.0.0 255.252.0.0 host 10.3.0.2 eq 123
-access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 host 10.3.0.2 eq 53
-access-list Test_ACL extended deny udp 13.20.0.0 255.255.0.0 host 10.3.0.1 eq 53
-access-list Test_ACL extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 53
-access-list Test_ACL extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000
-access-list Test_ACL extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254 
-access-list Test_ACL extended permit udp any 10.3.10.0 255.255.255.0 gt 30000
-access-list Test_ACL extended deny ip any any 
+config terminal
+object-group network obj_net_2
+ network-object 5.6.7.0 255.255.255.0
+ network-object 5.6.8.0 255.255.255.0
+object-group network obj_net_1
+ network-object 1.2.3.4 255.255.255.255
+ network-object 1.2.3.5 255.255.255.255
+access-list Test_ACL  remark Policy comment
+access-list Test_ACL  extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123 log
+access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53 log
+access-list Test_ACL  extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53 log
+access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 53 log
+access-list Test_ACL  extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000 log
+access-list Test_ACL  remark  This is a comment
+access-list Test_ACL  extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254  log
+access-list Test_ACL  extended permit udp any 10.3.10.0 255.255.255.0 gt 30000 log
+access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 443 log
+access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 80 log
+access-list Test_ACL  extended permit tcp any 10.3.11.0 255.255.255.0 eq 22 log
+access-list Test_ACL  extended permit tcp 11.2.3.0 255.255.255.0 any eq 23 log
+access-list Test_ACL  remark Deny the rest
+access-list Test_ACL  extended deny ip any any  log
+wri
+exit
+
 ```
 
 Another example:
