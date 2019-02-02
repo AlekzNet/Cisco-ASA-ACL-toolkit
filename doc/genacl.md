@@ -70,6 +70,8 @@ any 10.3.11.0 255.255.255.0 tcp:22
 
 default settings will produce the following output:
 
+`cat test-pol.acl | genacl.py`
+
 ```txt
 config terminal
 object-group network obj_net_2
@@ -78,20 +80,20 @@ object-group network obj_net_2
 object-group network obj_net_1
  network-object 1.2.3.4 255.255.255.255
  network-object 1.2.3.5 255.255.255.255
-access-list Test_ACL  extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123 log
-access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53 log
-access-list Test_ACL  extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53 log
-access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 53 log
-access-list Test_ACL  extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000 log
+access-list Test_ACL  extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123 
+access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53 
+access-list Test_ACL  extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53 
+access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.8.4 255.255.255.254 eq 53 
+access-list Test_ACL  extended permit udp 10.192.0.0 255.248.0.0 10.3.8.4 255.255.255.254 range 20000 30000 
 access-list Test_ACL  remark  This is a comment
-access-list Test_ACL  extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254  log
-access-list Test_ACL  extended permit udp any 10.3.10.0 255.255.255.0 gt 30000 log
-access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 443 log
-access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 80 log
-access-list Test_ACL  extended permit tcp any 10.3.11.0 255.255.255.0 eq 22 log
-access-list Test_ACL  extended permit tcp 11.2.3.0 255.255.255.0 any eq 23 log
+access-list Test_ACL  extended permit ip 10.0.0.0 255.0.0.0 10.3.9.4 255.255.255.254  
+access-list Test_ACL  extended permit udp any 10.3.10.0 255.255.255.0 gt 30000 
+access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 443 
+access-list Test_ACL  extended permit tcp object-group obj_net_1 object-group obj_net_2 eq 80 
+access-list Test_ACL  extended permit tcp any 10.3.11.0 255.255.255.0 eq 22 
+access-list Test_ACL  extended permit tcp 11.2.3.0 255.255.255.0 any eq 23 
 access-list Test_ACL  remark Deny the rest
-access-list Test_ACL  extended deny ip any any  log
+access-list Test_ACL  extended deny ip any any  
 wri
 exit
 
