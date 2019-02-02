@@ -59,10 +59,13 @@ class PRule:
 	'Class for a rule prototype'
 
 	re_any=re.compile(r'^any$', re.IGNORECASE)
-	re_dig=re.compile(r'^\d')
-	re_nondig=re.compile(r'^\D')
-	re_spaces=re.compile(r'\s+')
-	re_comma=re.compile(r'\s*,\s*')
+	re_dig=re.compile(r'^\d')		# digital
+	re_nondig=re.compile(r'^\D') 	# non-digital
+	re_spaces=re.compile(r'\s+') 	# lots of spaces/tabs
+	re_comma=re.compile(r'\s*,\s*') # comma, surrounded by spaces/tabs (or not))
+	re_remark=re.compile(r'^\s*#')	# the whole line is a comment/remark
+	re_comment=re.compile(r'(?P<line>.*)\s*#(?P<comment>.*)') # if there is a comment in the line?
+
 
 # line (str) - policy line
 # deny (boolean) - by default the action is "allow", unless there is an explicit "deny" in the line
@@ -73,16 +76,29 @@ class PRule:
 		self.srv=[]
 		self.action="deny" if deny else "permit"
 		self.comment=""
+		line=line.strip()
+# If the line begins with "#" it's a comment		
+		if self.re_remark.search(line):
+			self.type="comment"
+			self.comment=self.re_remark.sub("",line)
+			self.line=None
+			return
+		else:
+			self.type="rule"
 		self.line=self.cleanup(line)
 		debug(self.line,2)
 		self.parse()
 
 	def cleanup(self,line):
-		line=line.strip()
-		debug("Before clean-up: %s" % line,3)
+		debug("cleanup -- before clean-up: %s" % line,3)
+		if self.re_comment.search(line):
+			self.comment=self.re_comment.search(line).group('comment')
+			line=self.re_comment.search(line).group('line')
 		line=self.re_spaces.sub(" ",line)
 		line=self.re_comma.sub(",",line)
+		debug("After clean-up: %s" % line,3)		
 		return line
+		
 		
 	def check_arr(self,arr):
 		if not len(arr):
@@ -130,6 +146,8 @@ class PRule:
 
 	def parse(self):
 
+
+			
 		addr1=''
 		addr2=''
 
@@ -246,6 +264,9 @@ class FGT(FW):
 		print 'config firewall policy'
 		policy.srvobj.update(self.predefsvc)
 		for rule in policy.policy:
+			if "comment" in rule.type: 
+				self.label = rule.comment
+				next
 			print ' edit ' + str(self.rulenum)
 			print '  set srcintf ' + self.srcintf
 			print '  set dstintf ' + self.dstintf
@@ -265,8 +286,8 @@ class FGT(FW):
 					print '  set logtraffic disable'
 				else:
 					print '  set logtraffic all'
-			if self.comment:
-				print '  set comments "'+ self.comment + '"'
+			if self.comment or rule.comment:
+				print '  set comments "'+ self.comment + ' ' + rule.comment + '"'
 			self.rulenum += 1
 			print ' next'
 		print 'end'
@@ -342,8 +363,13 @@ class ASA(FW):
 		if self.comment:
 			print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", self.comment])
 		for rule in policy.policy:
-			print  ' '.join(["access-list", self.aclname, self.rule_line(), "extended", rule.action, self.rule_proto(rule), \
-				self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log])
+			if "comment" in rule.type:
+				print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", rule.comment])
+			else:
+				if  rule.comment:
+					print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", rule.comment])
+				print  ' '.join(["access-list", self.aclname, self.rule_line(), "extended", rule.action, self.rule_proto(rule), \
+					self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log])
 
 	def rule_proto(self,rule):
 		if len(rule.srv) > 1:
