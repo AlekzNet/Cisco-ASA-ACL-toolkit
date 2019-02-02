@@ -78,7 +78,6 @@ object-group network obj_net_2
 object-group network obj_net_1
  network-object 1.2.3.4 255.255.255.255
  network-object 1.2.3.5 255.255.255.255
-access-list Test_ACL  remark Policy comment
 access-list Test_ACL  extended permit tcp 10.228.0.0 255.252.0.0 10.3.0.2 255.255.255.255 eq 123 log
 access-list Test_ACL  extended permit udp 13.20.0.0 255.255.0.0 10.3.0.2 255.255.255.255 eq 53 log
 access-list Test_ACL  extended deny udp 13.20.0.0 255.255.0.0 10.3.0.1 255.255.255.255 eq 53 log
