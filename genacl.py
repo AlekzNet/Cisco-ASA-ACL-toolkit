@@ -178,6 +178,18 @@ class FW():
 	log='' 					# logging
 	comment=''				# comments
 
+	re_any = re.compile('any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
+
+	def rprint(self,policy):
+		self.fw_header_print()
+		self.fw_netobj_print(policy.netobj)
+		self.fw_srvobj_print(policy.srvobj)
+		self.fw_rules_print(policy)
+		self.fw_footer_print()
+
+	def fw_header_print(self):
+		pass
+
 	def fw_netobj_print(self,netobj):
 		pass
 
@@ -194,6 +206,12 @@ class FW():
 		pass
 
 	def srvgrp_add(self,srvgrp,rule):
+		pass
+		
+	def fw_rules_print(self, policy):
+		pass
+		
+	def fw_footer_print(self):
 		pass
 		
 # Create object names:
@@ -226,12 +244,6 @@ class FW():
 class FGT(FW):
 	'FortiGate specific class'
 	devtype='fgt'
-	vdom = ''
-	srcintf = ''
-	dstintf = ''
-	mingrp=0 #minimal amount of objects in the rule to move in a separate group
-
-	re_any = re.compile('any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
 
 	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
 
@@ -241,17 +253,9 @@ class FGT(FW):
 		self.dstintf = dstintf
 		self.rulenum=rulenum 	# begin with this rulenumber: edit rulenum
 		self.label=label		# section label
-		self.mingrp=mg
+		self.mingrp=mg			# minimum amount of objects to create a group
 		self.log = log
 		self.comment = comment
-
-	def rprint(self,policy):
-		if self.vdom:
-			self.fw_header_print()
-		self.fw_netobj_print(policy.netobj)
-		self.fw_srvobj_print(policy.srvobj)
-		self.fw_rules_print(policy)
-		self.fw_footer_print()
 
 	def fw_header_print(self):
 		if self.vdom:
@@ -347,12 +351,9 @@ class FGT(FW):
 				else:
 					srvobj[srv]=re.sub(':','-',srv)
 
-
 class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
-	aclname='' #ACL name
-
 
 	def __init__(self,aclname='Test_ACL',rulenum=0, log=False, comment=''):
 		self.aclname=aclname
@@ -397,13 +398,6 @@ class ASA(FW):
 			return 'object-group ' + policy.netgrp[tuple(addr)]
 		else:
 			return addr[0]
-
-	def rprint(self,policy):
-		self.fw_header_print()
-		self.fw_netgrp_print(policy.netgrp)
-		self.fw_srvgrp_print(policy.srvgrp)
-		self.fw_rules_print(policy)
-		self.fw_footer_print()
 
 	def fw_header_print(self):
 		print 'config terminal'
@@ -469,6 +463,19 @@ class ASA(FW):
 				srvgrp[tuple(rule.srv)]=objname
 
 
+class R77(FW):
+	'CheckPoint R77 specific class'
+	
+	def __init__(self, policy='test',rulenum=1000, label='', log=False, comment='', mg=0):
+		self.policy = policy
+		self.rulenum=rulenum 	# begin with this rulenumber: edit rulenum
+		self.label=label		# section label
+		self.log = log
+		self.comment = comment
+		self.mingrp=mg
+
+
+
 class Policy(PRule):
 	'Class for the whole policy'
 	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-010.000.001.000_24' }
@@ -510,19 +517,23 @@ sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or 
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
 parser.add_argument('--deny', help="Use deny by default instead of permit", action="store_true")
 log = parser.add_mutually_exclusive_group()
-log.add_argument('--log', default=False, help="Logging. Default: none for ASA, utm for FGT. ", action="store_true")
-log.add_argument('--nolog', default=False, help="Logging. Default: none for ASA, utm for FGT. ", action="store_true")
+log.add_argument('--log', default=False, help="Logging. Default: none for ASA and CP, utm for FGT. ", action="store_true")
+log.add_argument('--nolog', default=False, help="Logging. Default: none for ASA and CP, utm for FGT. ", action="store_true")
 parser.add_argument('--comment', default='', help="Comment, Default - none")
-parser.add_argument('--dev', default="asa", choices=['asa','fgt'], help="Type of device: asa (default) or fgt")
+parser.add_argument('--dev', default="asa", choices=['asa','fgt','r77'], help="Type of device: asa (default), fgt or r77")
+parser.add_argument('--rn', default=1000, help="Starting rule number. Default - 1000", type=int)
+
 asa = parser.add_argument_group('Cisco ASA')
 asa.add_argument('--acl', default="Test_ACL", nargs='?', help="ACL name for ASA. Default=Test_ACL")
-asa.add_argument('--ln', default=0, help="Starting line number for ASA. Default - 0 (no line numbers)", type=int)
+
 fgt = parser.add_argument_group('Fortigate')
 fgt.add_argument('--vdom', default='', help="VDOM name for FortiGate. Default - none")
 fgt.add_argument('--si', default="any", help="Source interface for FortiGate. Default - any")
 fgt.add_argument('--di', default="any", help="Destination interface for FortiGate. Default - any")
-fgt.add_argument('--rn', default=10000, help="Starting rule number for Fortigate. Default - 10000")
 fgt.add_argument('--label', default='', help="Section label, Default - none")
+
+r77 = parser.add_argument_group('CheckPoint R77')
+r77.add_argument('--policy', default='test', help="CheckPoint policy name. 	Default - \"test\" ")
 
 
 args = parser.parse_args()
@@ -531,12 +542,14 @@ args = parser.parse_args()
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
 if 'asa' in args.dev:
-	dev=ASA(args.acl,args.ln, args.log, args.comment)
+	dev=ASA(args.acl,args.rn, args.log, args.comment)
 elif 'fgt' in args.dev:
 	if args.nolog: args.log = "disable"
-	dev=FGT(args.vdom, args.si, args.di, int(args.rn), args.label, args.log, args.comment)
+	dev=FGT(args.vdom, args.si, args.di, args.rn, args.label, args.log, args.comment)
+elif 'r77' in args.dev:
+	dev=R77(args.policy, args.rn, args.log, args.comment)
 else:
-	print >>sys.stderr, dev, "- not supported device. It should be asa (Cisco ASA) or fgt (FortiGate)"
+	print >>sys.stderr, dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)"
 	sys.exit(1)
 
 policy = Policy(dev)
