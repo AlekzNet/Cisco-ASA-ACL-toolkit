@@ -21,39 +21,9 @@ def debug(string,level=1):
 	if args.verbose >= level:
 		pprint.pprint(string,sys.stderr,width=70)
 
-# addr = IP/mask
-# return = 1.2.3.4 255.255.255.255
-def cidr2str(addr):
-	debug("cidr2str -- addr = %s" % addr,4)
-	tmp = netaddr.IPNetwork(addr)
-	return ' '.join([str(tmp.ip),str(tmp.netmask)])
 
-# Create object names:
-# h-001.020.003.004  -- for hosts
-# n-001.020.003.000_24 -- for networks			
-# net - netaddr.IPNetwork(ip)
-def net2name(ip):
-	net=str(ip.network)
-	mask=str(ip.prefixlen)
-	if ishost(ip): return 'h-'+ip2txt(net)
-	else: return 'n-'+ip2txt(net)+'_'+mask
 
-# ip - string IP-address -- 1.2.3.4
-# returns - 001.002.003.004
-def ip2txt(ip):
-	return ".".join(map(octet2txt,ip.split('.')))
 
-# octet - string of 0...255 (e.g. 12, 1, 123)
-# returns 012, 001, 123
-def octet2txt(octet):
-	if len(octet) < 3:
-		octet = "0" + octet if len(octet) == 2 else "00" + octet
-	return octet
-
-# Returns True if the netmask is 32, and False otherwise
-# ip is a netaddr object
-def ishost(ip):
-	return True if ip.prefixlen == 32 else False
 
 class PRule:
 	'Class for a rule prototype'
@@ -99,6 +69,12 @@ class PRule:
 		debug("After clean-up: %s" % line,3)		
 		return line
 		
+# addr = IP/mask
+# return = 1.2.3.4 255.255.255.255
+	def cidr2str(self,addr):
+		debug("cidr2str -- addr = %s" % addr,4)
+		tmp = netaddr.IPNetwork(addr)
+		return ' '.join([str(tmp.ip),str(tmp.netmask)])		
 		
 	def check_arr(self,arr):
 		if not len(arr):
@@ -116,7 +92,7 @@ class PRule:
 			del arr[0]
 		elif not ',' in arr[0]:
 			if '/' in arr[0]:
-				addr = [cidr2str(arr[0])]
+				addr = [self.cidr2str(arr[0])]
 				del arr[0]
 			elif '0.0.0.0' in arr[0] and '0.0.0.0' in arr[1]:
 				addr=['any']
@@ -125,7 +101,7 @@ class PRule:
 				addr = [' '.join(arr[0:2])]
 				del arr[0:2]
 		else:
-			addr = [cidr2str(x) for x in arr[0].split(',')]
+			addr = [self.cidr2str(x) for x in arr[0].split(',')]
 			addr.sort()
 			del arr[0]
 		debug("parse_addr - addr = %s" % addr,3)
@@ -135,7 +111,7 @@ class PRule:
 # returns a list of one IP-address
 	def parse_addr_args(self,addr):
 		if '/' in addr:
-			return [cidr2str(addr)]
+			return [self.cidr2str(addr)]
 		elif self.re_any.search(addr):
 			return ['any']
 		elif self.re_nondig.match(addr):
@@ -145,8 +121,6 @@ class PRule:
 		else: return [addr+' 255.255.255.255']
 
 	def parse(self):
-
-
 			
 		addr1=''
 		addr2=''
@@ -221,6 +195,33 @@ class FW():
 
 	def srvgrp_add(self,srvgrp,rule):
 		pass
+		
+# Create object names:
+# h-001.020.003.004  -- for hosts
+# n-001.020.003.000_24 -- for networks			
+# net - netaddr.IPNetwork(ip)
+	def net2name(self,ip):
+		net=str(ip.network)
+		mask=str(ip.prefixlen)
+		if self.ishost(ip): return 'h-' + self.ip2txt(net)
+		else: return 'n-' + self.ip2txt(net) + '_'+mask
+
+# ip - string IP-address -- 1.2.3.4
+# returns - 001.002.003.004
+	def ip2txt(self,ip):
+		return ".".join(map(self.octet2txt,ip.split('.')))
+
+# octet - string of 0...255 (e.g. 12, 1, 123)
+# returns 012, 001, 123
+	def octet2txt(self,octet):
+		if len(octet) < 3:
+			octet = "0" + octet if len(octet) == 2 else "00" + octet
+		return octet
+
+# Returns True if the netmask is 32, and False otherwise
+# ip is a netaddr object
+	def ishost(self,ip):
+		return True if ip.prefixlen == 32 else False		
 
 class FGT(FW):
 	'FortiGate specific class'
@@ -334,7 +335,7 @@ class FGT(FW):
 				if addr not in netobj:
 					if self.re_any.search(addr):
 						netobj[addr]  = 'all'
-					else: netobj[addr] = net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
+					else: netobj[addr] = self.net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
 
 	def srvobj_add(self,srvobj,rule):
 		services = rule.srv
