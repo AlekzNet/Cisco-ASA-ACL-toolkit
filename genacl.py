@@ -160,17 +160,20 @@ class PRule:
 			debug(self.line,0)
 			debug("Either too few fields or define either --src IP or --dst IP",0)
 			sys.exit(1)
-		debug("Src = %s" % self.src,2)
-		debug("Dst = %s" % self.dst,2)
-		debug("Srv = %s" % self.srv,2)
-		debug("Action = %s" % self.action,2)
-		debug("Comment = %s" % self.comment,2)
+		debug("Src = %s" % self.src,3)
+		debug("Dst = %s" % self.dst,3)
+		debug("Srv = %s" % self.srv,3)
+		debug("Action = %s" % self.action,3)
+		debug("Comment = %s" % self.comment,3)
 		
 	
 
 class FW():
 	'General Firewall Class'
-	devtype='' #Device type
+	devtype='' 				# Device type
+	anyhost='' 				# String for any host
+	anyservice=''			# String for any service
+	predefsvc={}			# Predefined services
 	netgrp_name='obj_net_' 	# Template for network object-group
 	netgrp_cnt=0 			# network object-group counter shift
 	srvgrp_name='obj_srv_' 	# Template for service object-group
@@ -187,6 +190,41 @@ class FW():
 		self.fw_rules_print(policy)
 		self.fw_footer_print()
 
+	def netobj_add(self,netobj,rule):
+		for addrs in rule.src,rule.dst:
+			# Convert a single IP-address to a list
+#			if not type(addrs) is list: addrs=[addrs]
+			for addr in addrs:
+				if addr not in netobj:
+					if self.re_any.search(addr):
+						netobj[addr]  = self.anyhost
+					else: netobj[addr] = self.net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
+
+	def srvobj_add(self,srvobj,rule):
+		services = rule.srv
+#		if not type(services) is list: services=[services]
+		for srv in services:
+			if srv not in srvobj and srv not in self.predefsvc:
+				if '*' in srv:
+					srvobj[srv] = self.anyservice
+				else:
+					srvobj[srv]=re.sub(':','-',srv)
+
+	def netgrp_add(self,netgrp,rule):
+		for addrs in rule.src,rule.dst:
+			if len(addrs) > 1:
+				if tuple(addrs) not in netgrp:
+					objname=self.netgrp_name+str(len(netgrp)+1+self.netgrp_cnt)
+					netgrp[tuple(addrs)]=objname
+
+
+	def srvgrp_add(self,srvgrp,rule):
+		if len(rule.srv) > 1:
+			if tuple(rule.srv) not in srvgrp:
+				objname=self.srvgrp_name+str(len(srvgrp)+1+self.srvgrp_cnt)
+				srvgrp[tuple(rule.srv)]=objname
+				
+
 	def fw_header_print(self):
 		pass
 
@@ -195,19 +233,7 @@ class FW():
 
 	def fw_srvobj_print(self,srvobj):
 		pass
-
-	def netobj_add(self,netobj,rule):
-		pass
-
-	def netgrp_add(self,netgrp,rule):
-		pass
-
-	def srvobj_add(self,srvobj,rule):
-		pass
-
-	def srvgrp_add(self,srvgrp,rule):
-		pass
-		
+				
 	def fw_rules_print(self, policy):
 		pass
 		
@@ -244,6 +270,8 @@ class FW():
 class FGT(FW):
 	'FortiGate specific class'
 	devtype='fgt'
+	anyhost='all'
+	anyservice='ALL'
 
 	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
 
@@ -255,6 +283,12 @@ class FGT(FW):
 		self.mingrp=mg			# minimum amount of objects to create a group
 		self.log = log
 		self.comment = comment
+
+	def netgrp_add(self,netgrp,rule):
+		pass
+
+	def srvgrp_add(self,srvgrp,rule):
+		pass
 
 	def fw_header_print(self):
 		if self.vdom:
@@ -329,34 +363,22 @@ class FGT(FW):
 				print ' next'
 		print 'end'
 
-	def netobj_add(self,netobj,rule):
-		for addrs in rule.src,rule.dst:
-			# Convert a single IP-address to a list
-#			if not type(addrs) is list: addrs=[addrs]
-			for addr in addrs:
-				if addr not in netobj:
-					if self.re_any.search(addr):
-						netobj[addr]  = 'all'
-					else: netobj[addr] = self.net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
-
-	def srvobj_add(self,srvobj,rule):
-		services = rule.srv
-#		if not type(services) is list: services=[services]
-		for srv in services:
-			if srv not in srvobj and srv not in self.predefsvc:
-				if '*' in srv:
-					srvobj[srv] = 'ALL'
-				else:
-					srvobj[srv]=re.sub(':','-',srv)
 
 class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
+	anyhost='any'
 
 	def __init__(self,aclname='Test_ACL', log=False, comment=''):
 		self.aclname=aclname
 		if log: self.log = "log"
 		self.comment = comment
+
+	def netobj_add(self,netobj,rule):
+		pass
+
+	def srvobj_add(self,srvobj,rule):
+		pass
 
 	def fw_rules_print(self,policy):
 		if self.comment:
@@ -437,19 +459,7 @@ class ASA(FW):
 		else:
 			return ''
 
-	def netgrp_add(self,netgrp,rule):
-		for addrs in rule.src,rule.dst:
-			if len(addrs) > 1:
-				if tuple(addrs) not in netgrp:
-					objname=self.netgrp_name+str(len(netgrp)+1+self.netgrp_cnt)
-					netgrp[tuple(addrs)]=objname
 
-
-	def srvgrp_add(self,srvgrp,rule):
-		if len(rule.srv) > 1:
-			if tuple(rule.srv) not in srvgrp:
-				objname=self.srvgrp_name+str(len(srvgrp)+1+self.srvgrp_cnt)
-				srvgrp[tuple(rule.srv)]=objname
 
 
 class R77(FW):
@@ -485,16 +495,15 @@ class Policy(PRule):
 		self.device = dev
 		self.rulenum=rulenum	#current rule number counter
 
-	def getdev(self):
-		return self.device
-
 	def addrule(self,rule):
 		self.policy.append(rule)
 		rule.num = self.rulenum
+		debug("Rule %d Src = %s" % (rule.num, rule.src),2)
+		debug("Rule %d Dst = %s" % (rule.num, rule.dst),2)
+		debug("Rule %d Srv = %s" % (rule.num, rule.srv),2)
+		debug("Rule %d Action = %s" % (rule.num, rule.action),2)
+		debug("Rule %d Comment = %s" % (rule.num, rule.comment),2)
 		self.rulenum += 1
-
-	def getpol(self):
-		return self.policy
 
 	def get_objects(self):
 		for rule in self.policy:
@@ -502,6 +511,16 @@ class Policy(PRule):
 			self.device.netgrp_add(self.netgrp,rule)
 			self.device.srvobj_add(self.srvobj,rule)
 			self.device.srvgrp_add(self.srvgrp,rule)
+		debug("The %s policy contains:" % self.device.devtype,1)
+		debug("  %d rules " % len(self.policy),1)
+		debug("  %d network objects" % len(self.netobj),1)
+		debug(self.netobj,2)
+		debug("  %d network groups" % len(self.netgrp),1)
+		debug(self.netgrp,2)
+		debug("  %d service objects" % len(self.srvobj),1)
+		debug(self.srvobj,2)
+		debug("  %d service groups" % len(self.srvgrp),1)
+		debug(self.srvgrp,2)
 
 	def rprint(self):
 		self.get_objects()
@@ -537,6 +556,7 @@ r77.add_argument('--policy', default='test', help="CheckPoint policy name. 	Defa
 
 args = parser.parse_args()
 
+debug("Verbosity level is %d" % args.verbose, 1)
 
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
