@@ -44,6 +44,7 @@ class PRule:
 		self.src=[]
 		self.dst=[]
 		self.srv=[]
+		self.num=0 #rule number
 		self.action="deny" if deny else "permit"
 		self.comment=""
 		line=line.strip()
@@ -170,7 +171,6 @@ class PRule:
 class FW():
 	'General Firewall Class'
 	devtype='' #Device type
-	rulenum = 0
 	netgrp_name='obj_net_' 	# Template for network object-group
 	netgrp_cnt=0 			# network object-group counter shift
 	srvgrp_name='obj_srv_' 	# Template for service object-group
@@ -247,11 +247,10 @@ class FGT(FW):
 
 	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
 
-	def __init__(self,vdom='root',srcintf='any',dstintf='any',rulenum=10000, label='', log=False, comment='', mg=0):
+	def __init__(self,vdom='root',srcintf='any',dstintf='any', label='', log=False, comment='', mg=0):
 		self.vdom = vdom
 		self.srcintf = srcintf
 		self.dstintf = dstintf
-		self.rulenum=rulenum 	# begin with this rulenumber: edit rulenum
 		self.label=label		# section label
 		self.mingrp=mg			# minimum amount of objects to create a group
 		self.log = log
@@ -272,7 +271,7 @@ class FGT(FW):
 			if "comment" in rule.type: 
 				self.label = rule.comment
 				next
-			print ' edit ' + str(self.rulenum)
+			print ' edit %s' % rule.num
 			print '  set srcintf ' + self.srcintf
 			print '  set dstintf ' + self.dstintf
 			print '  set srcaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.src))
@@ -293,7 +292,6 @@ class FGT(FW):
 					print '  set logtraffic all'
 			if self.comment or rule.comment:
 				print '  set comments "'+ self.comment + ' ' + rule.comment + '"'
-			self.rulenum += 1
 			print ' next'
 		print 'end'
 
@@ -355,22 +353,21 @@ class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
 
-	def __init__(self,aclname='Test_ACL',rulenum=0, log=False, comment=''):
+	def __init__(self,aclname='Test_ACL', log=False, comment=''):
 		self.aclname=aclname
-		self.rulenum=rulenum
 		if log: self.log = "log"
 		self.comment = comment
 
 	def fw_rules_print(self,policy):
 		if self.comment:
-			print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", self.comment])
+			print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", self.comment])
 		for rule in policy.policy:
 			if "comment" in rule.type:
-				print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", rule.comment])
+				print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
 			else:
 				if  rule.comment:
-					print ' '.join(["access-list", self.aclname, self.rule_line(), "remark", rule.comment])
-				print  ' '.join(["access-list", self.aclname, self.rule_line(), "extended", rule.action, self.rule_proto(rule), \
+					print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
+				print  ' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", rule.action, self.rule_proto(rule), \
 					self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log])
 
 	def rule_proto(self,rule):
@@ -378,14 +375,6 @@ class ASA(FW):
 			return 'object-group ' + policy.srvgrp[tuple(rule.srv)]
 		else:
 			return self.protocol(rule.srv[0])
-
-	def rule_line(self):
-		if self.rulenum > 0:
-			line = 'line ' + str(self.rulenum)
-			self.rulenum += 1
-		else:
-			line=''
-		return line
 
 	def rule_port(self,rule):
 		if len(rule.srv) > 1:
@@ -474,7 +463,12 @@ class R77(FW):
 		self.comment = comment
 		self.mingrp=mg
 
-
+# Gets a (str) line and wraps it in 
+# 'echo -e ' line '\nupdate_all\\n-q\\n" | dbedit -local'
+	def dbedit_wrap(self, line):
+		return 'echo -e ' + line + '\nupdate_all\\n-q\\n" | dbedit -local'
+		
+	
 
 class Policy(PRule):
 	'Class for the whole policy'
@@ -485,14 +479,19 @@ class Policy(PRule):
 	policy = [] # global policy
 	device = '' # 'ASA' or 'FGT' class object
 
-	def __init__(self,dev):
+# dev - device class
+# rulenum - the number of the first rule
+	def __init__(self,dev,rulenum):
 		self.device = dev
+		self.rulenum=rulenum	#current rule number counter
 
 	def getdev(self):
 		return self.device
 
 	def addrule(self,rule):
 		self.policy.append(rule)
+		rule.num = self.rulenum
+		self.rulenum += 1
 
 	def getpol(self):
 		return self.policy
@@ -542,17 +541,17 @@ args = parser.parse_args()
 f=sys.stdin if "-" == args.pol else open (args.pol,"r")
 
 if 'asa' in args.dev:
-	dev=ASA(args.acl,args.rn, args.log, args.comment)
+	dev=ASA(args.acl, args.log, args.comment)
 elif 'fgt' in args.dev:
 	if args.nolog: args.log = "disable"
-	dev=FGT(args.vdom, args.si, args.di, args.rn, args.label, args.log, args.comment)
+	dev=FGT(args.vdom, args.si, args.di, args.label, args.log, args.comment)
 elif 'r77' in args.dev:
-	dev=R77(args.policy, args.rn, args.log, args.comment)
+	dev=R77(args.policy, args.log, args.comment)
 else:
 	print >>sys.stderr, dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)"
 	sys.exit(1)
 
-policy = Policy(dev)
+policy = Policy(dev, args.rn)
 
 for line in f:
 	r=PRule(line,args.deny)
