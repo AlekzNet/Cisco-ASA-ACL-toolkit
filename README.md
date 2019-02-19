@@ -16,7 +16,7 @@ Important! This program set is under active development. Hence expect bugs. Plea
 * [ipaclmatch.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/ipaclmatch.md) - utility to search for rules matching IP-addresses, the networks they belong to, subnetworks, and generate a proto-policy.
 * [optimacl-simple.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl-simple.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Works with either the source or destination IP-addresses.
 * [optimacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/optimacl.md) - optimizes a proto-policy (by aggregating, removing overlapping rules, etc). Supports full policy (src dst srv)
-* [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) - utility to generate ASA ACL's or FortiGate policy from a proto-policy
+* [genacl.py](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/genacl.md) - utility to generate ASA ACL's, FortiGate or CheckPoint policy from a proto-policy
 * [trafstat.sh](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/trafstat.md) - analyses Cisco ASA logs and generates allowed traffic statstics (per ACL)
 * [genhtml.sh](https://github.com/AlekzNet/Cisco-ASA-ACL-toolkit/blob/master/doc/trafstat.md) - generates an HTML file from the results of trafstat.sh
 
