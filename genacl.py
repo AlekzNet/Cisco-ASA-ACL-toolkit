@@ -48,6 +48,7 @@ class PRule:
 		self.action="deny" if deny else "permit"
 		self.comment=""
 		line=line.strip()
+		self.origline=line
 # If the line begins with "#" it's a comment		
 		if self.re_remark.search(line):
 			self.type="comment"
@@ -73,7 +74,7 @@ class PRule:
 # addr = IP/mask
 # return = 1.2.3.4 255.255.255.255
 	def cidr2str(self,addr):
-		debug("cidr2str -- addr = %s" % addr,4)
+#		debug("cidr2str -- addr = %s" % addr,4)
 		tmp = netaddr.IPNetwork(addr)
 		return ' '.join([str(tmp.ip),str(tmp.netmask)])		
 		
@@ -86,8 +87,8 @@ class PRule:
 # arr -- takes a list, extracts the next address(es), removes the elements from the list
 # returns a list of addresses
 	def parse_addr(self,arr):
-		debug("parse_addr -- arr", 3)
-		debug(arr,4)
+#		debug("parse_addr -- arr", 3)
+#		debug(arr,4)
 		if 'any' in  arr[0]:
 			addr=['any']
 			del arr[0]
@@ -105,7 +106,7 @@ class PRule:
 			addr = [self.cidr2str(x) for x in arr[0].split(',')]
 			addr.sort()
 			del arr[0]
-		debug("parse_addr - addr = %s" % addr,3)
+#		debug("parse_addr - addr = %s" % addr,3)
 		return addr
 
 # used when inly the source or destination IP-addresses are used in the line
@@ -130,12 +131,12 @@ class PRule:
 
 		# Get the first address
 		addr1=self.parse_addr(arr)
-		debug("addr1 is %s" % addr1,3)
+#		debug("addr1 is %s" % addr1,3)
 		self.check_arr(arr)
 
 		if self.re_dig.match(arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
 			addr2=self.parse_addr(arr)
-			debug("addr2 is %s" % addr2,3)
+#			debug("addr2 is %s" % addr2,3)
 			self.check_arr(arr)
 
 		if not ',' in arr[0]:
@@ -143,6 +144,7 @@ class PRule:
 		else:
 			self.proto = ''
 			self.srv = [ x for x in arr[0].split(',')]
+			self.srv.sort()
 		del arr[0]
 
 		if len(arr): self.action = arr[0]
@@ -166,14 +168,14 @@ class PRule:
 		debug("Action = %s" % self.action,3)
 		debug("Comment = %s" % self.comment,3)
 		
-	
-
 class FW():
 	'General Firewall Class'
 	devtype='' 				# Device type
-	anyhost='' 				# String for any host
-	anyservice=''			# String for any service
+	anyhost='any' 			# String for any host
+	anyservice='any'		# String for any service
+	action={"permit": "permit", "deny": "deny"}	# default actions. Usage:  self.action[rule.action]]
 	predefsvc={}			# Predefined services
+	predefsvcgrp={}			# Predefined service groups
 	netgrp_name='obj_net_' 	# Template for network object-group
 	netgrp_cnt=0 			# network object-group counter shift
 	srvgrp_name='obj_srv_' 	# Template for service object-group
@@ -220,7 +222,11 @@ class FW():
 
 	def srvgrp_add(self,srvgrp,rule):
 		if len(rule.srv) > 1:
-			if tuple(rule.srv) not in srvgrp:
+			debug("srvgrp_add -- rule.srv",3)
+			debug(rule.srv,3)
+			debug("srvgrp_add -- rule.srv tuple",3)
+			debug(tuple(rule.srv),3)
+			if tuple(rule.srv) not in srvgrp and tuple(rule.srv) not in self.predefsvcgrp:
 				objname=self.srvgrp_name+str(len(srvgrp)+1+self.srvgrp_cnt)
 				srvgrp[tuple(rule.srv)]=objname
 				
@@ -272,8 +278,11 @@ class FGT(FW):
 	devtype='fgt'
 	anyhost='all'
 	anyservice='ALL'
+	action={"permit": "accept", "deny": "deny"}
 
-	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:7000-7009 udp:7000-7009': 'AFS3', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'udp:500 udp:4500': 'IKE', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:1080 udp:1080': 'SOCKS', 'tcp:465': 'SMTPS', 'IP:47': 'GRE', 'tcp:5631 udp:5632': 'PC-Anywhere', 'tcp:79': 'FINGER', 'tcp:554 tcp:7070 tcp:8554 udp:554': 'RTSP', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:111 tcp:2049 udp:111 udp:2049': 'NFS', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'udp:2427 udp:2727': 'MGCP', 'tcp:1512 udp:1512': 'WINS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2401 udp:2401': 'CVSPSERVER', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:161-162 udp:161-162': 'SNMP', 'tcp:210': 'WAIS', 'tcp:1720 tcp:1503 udp:1719': 'H323', 'ICMP:8': 'PING', 'tcp:5060 udp:5060': 'SIP', 'tcp:1701 udp:1701': 'L2TP', 'tcp:389': 'LDAP', 'tcp:123 udp:123': 'NTP', 'udp:26000 udp:27000 udp:27910 udp:27960': 'QUAKE', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:53 udp:53': 'DNS', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:88 udp:88': 'KERBEROS', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'tcp:1755 udp:1024-5000': 'MMS', 'udp:1812-1813': 'RADIUS', 'tcp:135 udp:135': 'DCE-RPC', 'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'tcp:111 udp:111': 'ONC-RPC', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST', 'tcp:1494 tcp:2598': 'WINFRAME'}
+	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:465': 'SMTPS', 'IP:47': 'GRE',  'tcp:79': 'FINGER', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:210': 'WAIS', 'ICMP:8': 'PING', 'tcp:389': 'LDAP', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'udp:1812-1813': 'RADIUS',  'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST'}
+
+	predefsvcgrp = {('tcp:7000-7009', 'udp:7000-7009'): 'AFS3', ('udp:500', 'udp:4500'): 'IKE', ('tcp:1080', 'udp:1080'): 'SOCKS', ('tcp:5631', 'udp:5632'): 'PC-Anywhere', ('tcp:554', 'tcp:7070', 'tcp:8554', 'udp:554'): 'RTSP', ('tcp:111', 'tcp:2049', 'udp:111', 'udp:2049'): 'NFS', ('udp:2427', 'udp:2727'): 'MGCP', ('tcp:1512', 'udp:1512'): 'WINS', ('tcp:2401', 'udp:2401'): 'CVSPSERVER', ('tcp:161-162', 'udp:161-162'): 'SNMP', ('tcp:1720', 'tcp:1503', 'udp:1719'): 'H323', ('tcp:5060', 'udp:5060'): 'SIP', ('tcp:1701', 'udp:1701'): 'L2TP', ('tcp:123', 'udp:123'): 'NTP', ('udp:26000', 'udp:27000', 'udp:27910', 'udp:27960'): 'QUAKE', ('tcp:53', 'udp:53'): 'DNS', ('tcp:88', 'udp:88'): 'KERBEROS', ('tcp:1755', 'udp:1024-5000'): 'MMS', ('tcp:135', 'udp:135'): 'DCE-RPC', ('tcp:111', 'udp:111'): 'ONC-RPC', ('tcp:1494', 'tcp:2598'): 'WINFRAME'}
 
 	def __init__(self,vdom='root',srcintf='any',dstintf='any', label='', log=False, comment='', mg=0):
 		self.vdom = vdom
@@ -285,9 +294,6 @@ class FGT(FW):
 		self.comment = comment
 
 	def netgrp_add(self,netgrp,rule):
-		pass
-
-	def srvgrp_add(self,srvgrp,rule):
 		pass
 
 	def fw_header_print(self):
@@ -302,6 +308,7 @@ class FGT(FW):
 		print 'config firewall policy'
 		policy.srvobj.update(self.predefsvc)
 		for rule in policy.policy:
+			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 			if "comment" in rule.type: 
 				self.label = rule.comment
 				next
@@ -313,10 +320,7 @@ class FGT(FW):
 			print '  set service ' + ' '.join(map(lambda x: policy.srvobj[x], rule.srv))
 			print '  set schedule always'
 			print '  set status enable'
-			if 'permit' in rule.action:
-				print '  set action accept'
-			else:
-				print '  set action deny'
+			print '  set action ' + self.action[rule.action]
 			if self.label:
 				print '  set global-label "' + self.label + '"'
 			if self.log:
@@ -363,11 +367,11 @@ class FGT(FW):
 				print ' next'
 		print 'end'
 
-
 class ASA(FW):
 	'ASA specific class'
 	devtype='asa'
 	anyhost='any'
+	
 
 	def __init__(self,aclname='Test_ACL', log=False, comment=''):
 		self.aclname=aclname
@@ -384,12 +388,13 @@ class ASA(FW):
 		if self.comment:
 			print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", self.comment])
 		for rule in policy.policy:
+			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 			if "comment" in rule.type:
 				print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
 			else:
 				if  rule.comment:
 					print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
-				print  ' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", rule.action, self.rule_proto(rule), \
+				print  ' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", self.action[rule.action], self.rule_proto(rule), \
 					self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log])
 
 	def rule_proto(self,rule):
@@ -459,28 +464,99 @@ class ASA(FW):
 		else:
 			return ''
 
-
-
-
 class R77(FW):
 	'CheckPoint R77 specific class'
+	devtype='R77'
+	anyhost="globals:Any"
+	anyservice="globals:Any"
+	action={"permit": "accept_action:accept", "deny": "drop_action:drop"}
+	#re_newline=re.compile(r'(\\n$)|(\\n\\$)')
+	re_newline=re.compile(r'(\n$)|(\n\$)')
 	
-	def __init__(self, policy='test',rulenum=1000, label='', log=False, comment='', mg=0):
-		self.policy = policy
-		self.rulenum=rulenum 	# begin with this rulenumber: edit rulenum
-		self.label=label		# section label
+	def __init__(self, policy='test', log=False, comment="", nodbedit=False, mg=0):
+		self.policy = policy	# policy name
+#		self.rulenum=rulenum 	# begin with this rule number: edit rulenum
+#		self.label=label		# section label
 		self.log = log
 		self.comment = comment
+		self.nodbedit=nodbedit
 		self.mingrp=mg
 
 # Gets a (str) line and wraps it in 
 # 'echo -e ' line '\nupdate_all\\n-q\\n" | dbedit -local'
-	def dbedit_wrap(self, line):
-		return 'echo -e ' + line + '\nupdate_all\\n-q\\n" | dbedit -local'
+	def dbedit(self, line):
+		if self.nodbedit: print self.re_newline.sub("",line)
+		else: print 'echo -e \"' + line + '\\nupdate_all\\n-q\\n" | dbedit -local'
 		
-	
+	def fw_netobj_print(self,netobj):		
+		for obj in netobj:
+			debug("fw_netobj_print  -- obj",3)
+			debug(obj,3)
+			if not 'any' in obj:
+				ip,mask=obj.split()
+				if '255.255.255.255' in mask:
+					self.dbedit("create host_plain %s" % netobj[obj])
+					self.dbedit("modify network_objects {0!s} ipaddr {1!s}".format(netobj[obj],obj.split()[0]))
+				else:
+					self.dbedit("create network %s" % netobj[obj])
+					ip,mask=obj.split()
+					self.dbedit("modify network_objects {0!s} ipaddr {1!s}\\nmodify network_objects {0!s} netmask {2!s}".format(netobj[obj],ip,mask))
+				
 
-class Policy(PRule):
+	def fw_srvobj_print(self,srvobj):
+		for obj in srvobj:
+			debug("fw_srvobj_print  -- obj",3)
+			debug(obj,3)
+			if not '*' in obj:
+				# For some reason the following construction does not work
+				# proto,ports = obj.split(':') if ':' in obj else obj,''
+				if ':' in obj:	proto,ports = obj.split(':')
+				else: proto,ports = obj,''
+				
+				if 'udp' in proto or 'tcp' in proto:
+					self.dbedit("create {0!s}_service {1!s}".format(proto,srvobj[obj]))
+					self.dbedit("modify services {0!s} port {1!s}".format(srvobj[obj],ports))
+				elif 'icmp' in proto:
+					if ports:
+						self.dbedit("create {0!s}_service {1!s}".format(proto,srvobj[obj]))
+						self.dbedit("modify services {0!s} icmp_type {1!s}".format(srvobj[obj],ports))					
+				elif 'ip' in proto:
+					if ports:
+						self.dbedit("create other_service {1!s}".format(proto,srvobj[obj]))
+						self.dbedit("modify services {0!s} protocol {1!s}".format(srvobj[obj],ports))	
+				else:
+					print '# %s is not implemented' % proto
+
+	def fw_rules_print(self,policy):
+		policy.srvobj.update(self.predefsvc)
+		dbline="" 
+		for rule in policy.policy:
+			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
+			if "comment" in rule.type: 
+				self.label = rule.comment
+				next
+			dbline = "addelement fw_policies ##{0!s} rule security_rule\\n\ \n".format(self.policy)
+			dbline += "addelement fw_policies ##{0!s} rule:{1}:action {2!s}\\n \n".format(self.policy,rule.num,self.action[rule.action])
+			dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n\ \n".format(self.policy,rule.num,rule.comment)
+			dbline += "modify fw_policies ##{0!s} rule:{1}:name \"\"\\n\ \n".format(self.policy,rule.num)
+			for ip in rule.src:
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:src:\'\' network_objects:{2!s}\\n\ \n".format(self.policy,rule.num,policy.netobj[ip])
+			for ip in rule.dst:
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:dst:\'\' network_objects:{2!s}\\n\ \n".format(self.policy,rule.num,policy.netobj[ip])		
+			for srv in rule.srv:
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:services:\'\' services:{2!s}\\n\ \n".format(self.policy,rule.num,policy.srvobj[srv])	
+
+			if self.log:
+				if type(self.log) is string and "disable" in self.log:
+					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n\ \n".format(self.policy,rule.num,"tracks:None")
+				else:
+					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n\ \n".format(self.policy,rule.num,"tracks:Log")
+			if self.comment or rule.comment:
+				dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n\ \n".format(self.policy,rule.num,rule.comment)
+			self.dbedit(dbline)
+			dbline=""
+
+class Policy():
 	'Class for the whole policy'
 	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-010.000.001.000_24' }
 	srvobj = {} # { 'tcp:20-23': 'TCP-20-23' }
@@ -498,6 +574,7 @@ class Policy(PRule):
 	def addrule(self,rule):
 		self.policy.append(rule)
 		rule.num = self.rulenum
+		debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 		debug("Rule %d Src = %s" % (rule.num, rule.src),2)
 		debug("Rule %d Dst = %s" % (rule.num, rule.dst),2)
 		debug("Rule %d Srv = %s" % (rule.num, rule.srv),2)
@@ -552,6 +629,7 @@ fgt.add_argument('--label', default='', help="Section label, Default - none")
 
 r77 = parser.add_argument_group('CheckPoint R77')
 r77.add_argument('--policy', default='test', help="CheckPoint policy name. 	Default - \"test\" ")
+parser.add_argument('--nodbedit', default=False, help="Do not add dbedit decorations", action="store_true")
 
 
 args = parser.parse_args()
@@ -566,7 +644,8 @@ elif 'fgt' in args.dev:
 	if args.nolog: args.log = "disable"
 	dev=FGT(args.vdom, args.si, args.di, args.label, args.log, args.comment)
 elif 'r77' in args.dev:
-	dev=R77(args.policy, args.log, args.comment)
+	if args.nolog: args.log = "disable"
+	dev=R77(args.policy, args.log, args.comment, args.nodbedit)
 else:
 	print >>sys.stderr, dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)"
 	sys.exit(1)
