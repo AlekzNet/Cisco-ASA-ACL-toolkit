@@ -241,12 +241,19 @@ class FW():
 
 	def fw_srvobj_print(self,srvobj):
 		pass
+
+	def fw_netgrp_print(self, policy):
+		pass
+		
+	def fw_srvgrp_print(self, policy):
+		pass
 				
 	def fw_rules_print(self, policy):
 		pass
 		
 	def fw_footer_print(self):
 		pass
+
 		
 # Create object names:
 # h-001.020.003.004  -- for hosts
