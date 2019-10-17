@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FWS=edge.list
+FWS=asa.list
 USERNAME=username
 PASSWD=L1passwd
 ENABLE=L2passwd
