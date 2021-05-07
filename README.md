@@ -7,7 +7,7 @@ Important! This program set is under active development. Hence expect bugs. Plea
 
 * asa.sh - Shell script to remotely collect Cisco ASA configs
 * asa.exp - Expect script to remotely get and save ASA configuration, access-groups and access lists
-* asa.list - list of Cisco ASA firewall IP's and hostnames (to download te config from or upload to)
+* asa.list - list of Cisco ASA firewall IP's and hostnames (to download the config from or upload to)
 * asaconf.py - converts ACLs from ASA config file to HTML or `show access-list` result
 * asasort.sh - sort and separate ACLs by name. 
 * asasearch.sh - searches rules with matching IPaddresses (first in src, then dst) in all ACLs
