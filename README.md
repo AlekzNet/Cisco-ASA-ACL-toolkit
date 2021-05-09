@@ -39,20 +39,20 @@ The following is not supported:
 * NAT
 * source ports 
 * multiple contexts
-* Mixed Permit and Deny rules in optimacl.py
+* Mixed Permit and Deny rules in `optimacl.py`
 
 ## TODO
 
 * Rewrite ipaclmatch.py. It was written to quickly solve particular tasks. Adding new features created a mess.
 * I have one more optimization method in mind, but to implement it optimacl.py should be rewritten.
-* Add recursive group generation for all devices in genacl.py
+* Add recursive group generation for all devices in `genacl.py`
 
 
 ## Data collecting
 
-* Edit asa.list and place a list of the firewall IP-addresses and firewall hostnames (as in the ASA config). No empty lines.
+* Edit `asa.list` and place a list of the firewall IP-addresses and firewall hostnames (as in the ASA config). No empty lines.
 * Enter username/passwords in asa.sh, or uncomment lines that take the info from the keyboard
-* Run asa.sh. It will: 
+* Run `asa.sh`. It will: 
   * create directories with the firewall names
   * log onto the firewalls
   * run the following commands:
