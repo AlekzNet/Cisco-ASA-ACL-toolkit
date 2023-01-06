@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import string
 import argparse
@@ -8,13 +8,13 @@ import sys
 try:
 	import netaddr
 except ImportError:
-	print >>sys.stderr, 'ERROR: netaddr module not found, you can install it with \"pip install netaddr\"'
+	print('ERROR: netaddr module not found, you can install it with \"pip install netaddr\"', file=sys.stderr)
 	sys.exit(1)
 
 try:
 	import pprint
 except ImportError:
-	print >>sys.stderr, 'ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace pprint.pprint with print (the debug function)'
+	print('ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace pprint.pprint with print (the debug function)', file=sys.stderr)
 	sys.exit(1)
 
 def debug(string,level=1):
@@ -22,11 +22,8 @@ def debug(string,level=1):
 		pprint.pprint(string,sys.stderr,width=70)
 
 
-
-
-
 class PRule:
-	'Class for a rule prototype'
+	"""Class for a rule prototype"""
 
 	re_any=re.compile(r'^any$', re.IGNORECASE)
 	re_dig=re.compile(r'^\d')		# digital
@@ -109,7 +106,7 @@ class PRule:
 #		debug("parse_addr - addr = %s" % addr,3)
 		return addr
 
-# used when inly the source or destination IP-addresses are used in the line
+# used when only the source or destination IP-addresses are used in the line
 # returns a list of one IP-address
 	def parse_addr_args(self,addr):
 		if '/' in addr:
@@ -168,8 +165,11 @@ class PRule:
 		debug("Action = %s" % self.action,3)
 		debug("Comment = %s" % self.comment,3)
 		
-class FW():
-	'General Firewall Class'
+class FW:
+	"""
+	General Firewall Class
+	"""
+	
 	devtype='' 				# Device type
 	anyhost='any' 			# String for any host
 	anyservice='any'		# String for any service
@@ -183,7 +183,7 @@ class FW():
 	log='' 					# logging
 	comment=''				# comments
 
-	re_any = re.compile('any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
+	re_any = re.compile(r'any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
 
 	def rprint(self,policy):
 		self.fw_header_print()
@@ -283,7 +283,10 @@ class FW():
 		return True if ip.prefixlen == 32 else False		
 
 class FGT(FW):
-	'FortiGate specific class'
+	"""
+	FortiGate specific class
+	"""
+	
 	devtype='fgt'
 	anyhost='all'
 	anyservice='ALL'
@@ -307,77 +310,80 @@ class FGT(FW):
 
 	def fw_header_print(self):
 		if self.vdom:
-			print 'config vdom'
-			print 'edit ' + self.vdom
+			print('config vdom')
+			print('edit ' + self.vdom)
 
 	def fw_footer_print(self):
-		print 'end'
+		print('end')
 
 	def fw_rules_print(self,policy):
-		print 'config firewall policy'
+		print('config firewall policy')
 		policy.srvobj.update(self.predefsvc)
 		for rule in policy.policy:
 			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 			if "comment" in rule.type: 
 				self.label = rule.comment
 				next
-			print ' edit %s' % rule.num
-			print '  set srcintf ' + self.srcintf
-			print '  set dstintf ' + self.dstintf
-			print '  set srcaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.src))
-			print '  set dstaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.dst))
-			print '  set service ' + ' '.join(map(lambda x: policy.srvobj[x], rule.srv))
-			print '  set schedule always'
-			print '  set status enable'
-			print '  set action ' + self.action[rule.action]
+			print(' edit %s' % rule.num)
+			print('  set srcintf ' + self.srcintf)
+			print('  set dstintf ' + self.dstintf)
+			print('  set srcaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.src)))
+			print('  set dstaddr ' + ' '.join(map(lambda x: policy.netobj[x], rule.dst)))
+			print('  set service ' + ' '.join(map(lambda x: policy.srvobj[x], rule.srv)))
+			print('  set schedule always')
+			print('  set status enable')
+			print('  set action ' + self.action[rule.action])
 			if self.label:
-				print '  set global-label "' + self.label + '"'
+				print('  set global-label "' + self.label + '"')
 			if self.log:
 				if type(self.log) is string and "disable" in self.log:
-					print '  set logtraffic disable'
+					print('  set logtraffic disable')
 				else:
-					print '  set logtraffic all'
+					print('  set logtraffic all')
 			if self.comment or rule.comment:
-				print '  set comments "'+ self.comment + ' ' + rule.comment + '"'
-			print ' next'
-		print 'end'
+				print('  set comments "'+ self.comment + ' ' + rule.comment + '"')
+			print(' next')
+		print('end')
 
 	def fw_netobj_print(self,netobj):
-		print 'config firewall address'
+		print('config firewall address')
 		for obj in netobj:
-			print ' edit '+ netobj[obj]
-			print '  set subnet ' + obj
-			print ' next'
-		print 'end'
+			print(' edit '+ netobj[obj])
+			print('  set subnet ' + obj)
+			print(' next')
+		print('end')
 
 	def fw_srvobj_print(self,srvobj):
-		print 'config firewall service custom'
+		print('config firewall service custom')
 		for obj in srvobj:
 			if not '*' in obj:
 				# For some reason the following construction does not work
 				# proto,ports = obj.split(':') if ':' in obj else obj,''
 				if ':' in obj:	proto,ports = obj.split(':')
 				else: proto,ports = obj,''
-				print ' edit ' + srvobj[obj]
+				print(' edit ' + srvobj[obj])
 				if 'udp' in proto or 'tcp' in proto:
-					print '  set protocol TCP/UDP/SCTP'
-					print '  set ' + proto + '-portrange ' + ports
+					print('  set protocol TCP/UDP/SCTP')
+					print('  set ' + proto + '-portrange ' + ports)
 				elif 'icmp' in proto:
-					print '  set protocol ICMP'
+					print('  set protocol ICMP')
 					if ports:
-						print '  set icmptype ' + ports
+						print('  set icmptype ' + ports)
 				elif 'ip' in proto:
 					if ports:
-						print '  set protocol IP'
-						print '  set protocol-number ' + ports
+						print('  set protocol IP')
+						print('  set protocol-number ' + ports)
 				else:
-					print '  set protocol IP'
-					print '  set protocol-number ' + proto
-				print ' next'
-		print 'end'
+					print('  set protocol IP')
+					print('  set protocol-number ' + proto)
+				print(' next')
+		print('end')
 
 class ASA(FW):
-	'ASA specific class'
+	"""
+	ASA specific class
+	"""
+	
 	devtype='asa'
 	anyhost='any'
 	
@@ -395,16 +401,16 @@ class ASA(FW):
 
 	def fw_rules_print(self,policy):
 		if self.comment:
-			print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", self.comment])
+			print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", self.comment]))
 		for rule in policy.policy:
 			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 			if "comment" in rule.type:
-				print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
+				print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment]))
 			else:
 				if  rule.comment:
-					print ' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment])
-				print  ' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", self.action[rule.action], self.rule_proto(rule), \
-					self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log])
+					print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment]))
+				print (' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", self.action[rule.action],
+								 self.rule_proto(rule), self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log]))
 
 	def rule_proto(self,rule):
 		if len(rule.srv) > 1:
@@ -425,26 +431,26 @@ class ASA(FW):
 			return addr[0]
 
 	def fw_header_print(self):
-		print 'config terminal'
+		print('config terminal')
 
 	def fw_footer_print(self):
-		print 'wri'
-		print 'exit'
+		print('wri')
+		print('exit')
 
 	def fw_netgrp_print(self,netgrp):
 		for addrs in netgrp:
-			print 'object-group network',netgrp[tuple(addrs)]
+			print('object-group network',netgrp[tuple(addrs)])
 			for addr in addrs:
-				print ' network-object',addr
+				print(' network-object',addr)
 
 	def fw_srvgrp_print(self,srvgrp):
 		for svcs in srvgrp:
-			print 'object-group service',srvgrp[tuple(svcs)]
+			print('object-group service',srvgrp[tuple(svcs)])
 			for svc in svcs:
 				if 'icmp' in self.protocol(svc):
-					print ' service-object',self.protocol(svc),'icmp_type',self.port(svc)
+					print(' service-object',self.protocol(svc),'icmp_type',self.port(svc))
 				else:
-					print ' service-object',self.protocol(svc),'destination',self.port(svc)
+					print(' service-object',self.protocol(svc),'destination',self.port(svc))
 
 	def protocol(self,service):
 		if "*" in service:
@@ -474,7 +480,10 @@ class ASA(FW):
 			return ''
 
 class R77(FW):
-	'CheckPoint R77 specific class'
+	"""
+	CheckPoint R77 specific class
+	"""
+	
 	devtype='R77'
 	anyhost="globals:Any"
 	anyservice="globals:Any"
@@ -494,8 +503,8 @@ class R77(FW):
 # Gets a (str) line and wraps it in 
 # 'echo -e ' line '\nupdate_all\\n-q\\n" | dbedit -local'
 	def dbedit(self, line):
-		if self.nodbedit: print self.re_newline.sub("",line)
-		else: print 'echo -e \"' + line + '\\nupdate_all\\n-q\\n" | dbedit -local'
+		if self.nodbedit: print(self.re_newline.sub("",line))
+		else: print('echo -e \"' + line + '\\nupdate_all\\n-q\\n" | dbedit -local')
 		
 	def fw_netobj_print(self,netobj):		
 		for obj in netobj:
@@ -534,7 +543,7 @@ class R77(FW):
 						self.dbedit("create other_service {1!s}".format(proto,srvobj[obj]))
 						self.dbedit("modify services {0!s} protocol {1!s}".format(srvobj[obj],ports))	
 				else:
-					print '# %s is not implemented' % proto
+					print('# %s is not implemented' % proto)
 
 	def fw_rules_print(self,policy):
 		policy.srvobj.update(self.predefsvc)
@@ -563,22 +572,27 @@ class R77(FW):
 			if self.comment or rule.comment:
 				dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n\ \n".format(self.policy,rule.num,rule.comment)
 			self.dbedit(dbline)
-			dbline=""
+			dbline = ""
+
 
 class Policy():
-	'Class for the whole policy'
-	netobj = {} # { '10.0.1.0 255.255.255.0': 'n-010.000.001.000_24' }
-	srvobj = {} # { 'tcp:20-23': 'TCP-20-23' }
-	netgrp = {}	# { 'net-group1: }network-groups
-	srvgrp = {}	# service-groups
-	policy = [] # global policy
-	device = '' # 'ASA' or 'FGT' class object
+	"""
+	Class for the whole policy
+	"""
+	
+	netobj = {}		# { '10.0.1.0 255.255.255.0': 'n-010.000.001.000_24' }
+	srvobj = {}		# { 'tcp:20-23': 'TCP-20-23' }
+	netgrp = {}		# { 'net-group1: }network-groups
+	srvgrp = {}		# service-groups
+	policy = []		# global policy
+	device = ''		# 'ASA' or 'FGT' class object
+
 
 # dev - device class
 # rulenum - the number of the first rule
-	def __init__(self,dev,rulenum):
+	def __init__(self, dev, rulenum):
 		self.device = dev
-		self.rulenum=rulenum	#current rule number counter
+		self.rulenum = rulenum	#current rule number counter
 
 	def addrule(self,rule):
 		self.policy.append(rule)
@@ -597,16 +611,16 @@ class Policy():
 			self.device.netgrp_add(self.netgrp,rule)
 			self.device.srvobj_add(self.srvobj,rule)
 			self.device.srvgrp_add(self.srvgrp,rule)
-		debug("The %s policy contains:" % self.device.devtype,1)
-		debug("  %d rules " % len(self.policy),1)
-		debug("  %d network objects" % len(self.netobj),1)
-		debug(self.netobj,2)
-		debug("  %d network groups" % len(self.netgrp),1)
-		debug(self.netgrp,2)
-		debug("  %d service objects" % len(self.srvobj),1)
-		debug(self.srvobj,2)
-		debug("  %d service groups" % len(self.srvgrp),1)
-		debug(self.srvgrp,2)
+		debug("The %s policy contains:" % self.device.devtype, 1)
+		debug("  %d rules " % len(self.policy), 1)
+		debug("  %d network objects" % len(self.netobj), 1)
+		debug(self.netobj, 2)
+		debug("  %d network groups" % len(self.netgrp), 1)
+		debug(self.netgrp, 2)
+		debug("  %d service objects" % len(self.srvobj), 1)
+		debug(self.srvobj, 2)
+		debug("  %d service groups" % len(self.srvgrp), 1)
+		debug(self.srvgrp, 2)
 
 	def rprint(self):
 		self.get_objects()
@@ -645,24 +659,24 @@ args = parser.parse_args()
 
 debug("Verbosity level is %d" % args.verbose, 1)
 
-f=sys.stdin if "-" == args.pol else open (args.pol,"r")
+f = sys.stdin if "-" == args.pol else open(args.pol, "r")
 
 if 'asa' in args.dev:
-	dev=ASA(args.acl, args.log, args.comment)
+	dev = ASA(args.acl, args.log, args.comment)
 elif 'fgt' in args.dev:
 	if args.nolog: args.log = "disable"
-	dev=FGT(args.vdom, args.si, args.di, args.label, args.log, args.comment)
+	dev = FGT(args.vdom, args.si, args.di, args.label, args.log, args.comment)
 elif 'r77' in args.dev:
 	if args.nolog: args.log = "disable"
-	dev=R77(args.policy, args.log, args.comment, args.nodbedit)
+	dev = R77(args.policy, args.log, args.comment, args.nodbedit)
 else:
-	print >>sys.stderr, dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)"
+	print(dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)", file=sys.stderr)
 	sys.exit(1)
 
 policy = Policy(dev, args.rn)
 
 for line in f:
-	r=PRule(line,args.deny)
+	r = PRule(line, args.deny)
 	policy.addrule(r)
 
 policy.rprint()
