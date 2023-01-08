@@ -14,87 +14,95 @@ except ImportError:
 try:
 	import pprint
 except ImportError:
-	print('ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace pprint.pprint with print (the debug function)', file=sys.stderr)
+	print('ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace pprint.pprint with print (the debug function)',
+		file=sys.stderr)
 	sys.exit(1)
 
-def debug(string,level=1):
+
+def debug(string, level=1):
 	if args.verbose >= level:
-		pprint.pprint(string,sys.stderr,width=70)
+		pprint.pprint(string, sys.stderr, width=70)
 
 
 class PRule:
 	"""Class for a rule prototype"""
+	
+	re_any = re.compile(r'^any$', re.IGNORECASE)
+	re_dig = re.compile(r'^\d')			# digital
+	re_nondig = re.compile(r'^\D')		# non-digital
+	re_spaces = re.compile(r'\s+')		# lots of spaces/tabs
+	re_comma = re.compile(r'\s*,\s*')	# comma, surrounded by spaces/tabs (or not))
+	re_remark = re.compile(r'^\s*#')	# the whole line is a comment/remark
+	re_comment = re.compile(r'(?P<line>.*)\s*#(?P<comment>.*)')  # if there is a comment in the line?
 
-	re_any=re.compile(r'^any$', re.IGNORECASE)
-	re_dig=re.compile(r'^\d')		# digital
-	re_nondig=re.compile(r'^\D') 	# non-digital
-	re_spaces=re.compile(r'\s+') 	# lots of spaces/tabs
-	re_comma=re.compile(r'\s*,\s*') # comma, surrounded by spaces/tabs (or not))
-	re_remark=re.compile(r'^\s*#')	# the whole line is a comment/remark
-	re_comment=re.compile(r'(?P<line>.*)\s*#(?P<comment>.*)') # if there is a comment in the line?
-
-
-# line (str) - policy line
-# deny (boolean) - by default the action is "allow", unless there is an explicit "deny" in the line
-# 		 if deny is set to True, the action will be "deny"
-	def __init__(self,line,deny=False):
-		self.src=[]
-		self.dst=[]
-		self.srv=[]
-		self.num=0 #rule number
-		self.action="deny" if deny else "permit"
-		self.comment=""
-		line=line.strip()
-		self.origline=line
-# If the line begins with "#" it's a comment		
+	def __init__(self, line, deny=False):
+		"""
+		line (str) - policy line
+		deny (boolean) - by default the action is "allow", unless there is an explicit "deny" in the line
+		if deny is set to True, the action will be "deny"
+		"""
+		
+		self.src = []
+		self.dst = []
+		self.srv = []
+		self.num = 0  # rule number
+		self.action = "deny" if deny else "permit"
+		self.comment = ""
+		line = line.strip()
+		self.origline = line
+		# If the line begins with "#" it's a comment
 		if self.re_remark.search(line):
-			self.type="comment"
-			self.comment=self.re_remark.sub("",line)
-			self.line=None
+			self.type = "comment"
+			self.comment = self.re_remark.sub("", line)
+			self.line = None
 			return
 		else:
-			self.type="rule"
-		self.line=self.cleanup(line)
-		debug(self.line,2)
+			self.type = "rule"
+		self.line = self.cleanup(line)
+		debug(self.line, 2)
 		self.parse()
 
-	def cleanup(self,line):
-		debug("cleanup -- before clean-up: %s" % line,3)
+	def cleanup(self, line):
+		debug("cleanup -- before clean-up: %s" % line, 3)
 		if self.re_comment.search(line):
-			self.comment=self.re_comment.search(line).group('comment')
-			line=self.re_comment.search(line).group('line')
-		line=self.re_spaces.sub(" ",line)
-		line=self.re_comma.sub(",",line)
-		debug("After clean-up: %s" % line,3)		
+			self.comment = self.re_comment.search(line).group('comment')
+			line = self.re_comment.search(line).group('line')
+		line = self.re_spaces.sub(" ", line)
+		line = self.re_comma.sub(",", line)
+		debug("After clean-up: %s" % line, 3)
 		return line
-		
-# addr = IP/mask
-# return = 1.2.3.4 255.255.255.255
-	def cidr2str(self,addr):
-#		debug("cidr2str -- addr = %s" % addr,4)
+	
+	def cidr2str(self, addr):
+		"""
+		addr = IP/mask
+		return = 1.2.3.4 255.255.255.255
+		"""
+		# debug("cidr2str -- addr = %s" % addr,4)
 		tmp = netaddr.IPNetwork(addr)
-		return ' '.join([str(tmp.ip),str(tmp.netmask)])		
-		
-	def check_arr(self,arr):
+		return ' '.join([str(tmp.ip), str(tmp.netmask)])
+	
+	def check_arr(self, arr):
 		if not len(arr):
-			debug(self.line,0)
-			debug("Too few fields in the policy.",0)
+			debug(self.line, 0)
+			debug("Too few fields in the policy.", 0)
 			sys.exit(1)
 
-# arr -- takes a list, extracts the next address(es), removes the elements from the list
-# returns a list of addresses
-	def parse_addr(self,arr):
-#		debug("parse_addr -- arr", 3)
-#		debug(arr,4)
-		if 'any' in  arr[0]:
-			addr=['any']
+	def parse_addr(self, arr):
+		"""
+		arr -- takes a list, extracts the next address(es), removes the elements from the list
+		returns a list of addresses
+		"""
+		# debug("parse_addr -- arr", 3)
+		# debug(arr,4)
+		if 'any' in arr[0]:
+			addr = ['any']
 			del arr[0]
-		elif not ',' in arr[0]:
+		elif ',' not in arr[0]:
 			if '/' in arr[0]:
 				addr = [self.cidr2str(arr[0])]
 				del arr[0]
 			elif '0.0.0.0' in arr[0] and '0.0.0.0' in arr[1]:
-				addr=['any']
+				addr = ['any']
 				del arr[0:2]
 			else:
 				addr = [' '.join(arr[0:2])]
@@ -103,48 +111,51 @@ class PRule:
 			addr = [self.cidr2str(x) for x in arr[0].split(',')]
 			addr.sort()
 			del arr[0]
-#		debug("parse_addr - addr = %s" % addr,3)
+		# debug("parse_addr - addr = %s" % addr,3)
 		return addr
 
-# used when only the source or destination IP-addresses are used in the line
-# returns a list of one IP-address
-	def parse_addr_args(self,addr):
+	def parse_addr_args(self, addr):
+		"""
+		used when only the source or destination IP-addresses are used in the line
+		returns a list of one IP-address
+		"""
+		
 		if '/' in addr:
 			return [self.cidr2str(addr)]
 		elif self.re_any.search(addr):
 			return ['any']
 		elif self.re_nondig.match(addr):
-			return ["object-group "+addr]
+			return ["object-group " + addr]
 		elif ' ' in addr:
 			return [addr]
-		else: return [addr+' 255.255.255.255']
+		else:
+			return [addr + ' 255.255.255.255']
 
 	def parse(self):
-			
-		addr1=''
-		addr2=''
-
-		arr=self.line.split()
+		addr1 = ''
+		addr2 = ''
+		arr = self.line.split()
 
 		# Get the first address
-		addr1=self.parse_addr(arr)
-#		debug("addr1 is %s" % addr1,3)
+		addr1 = self.parse_addr(arr)
+		# debug("addr1 is %s" % addr1,3)
 		self.check_arr(arr)
 
 		if self.re_dig.match(arr[0]) or 'any' in arr[0] or 'host' in arr[0]:
-			addr2=self.parse_addr(arr)
-#			debug("addr2 is %s" % addr2,3)
+			addr2 = self.parse_addr(arr)
+			# debug("addr2 is %s" % addr2,3)
 			self.check_arr(arr)
 
-		if not ',' in arr[0]:
-			self.srv=[arr[0]]
+		if ',' not in arr[0]:
+			self.srv = [arr[0]]
 		else:
 			self.proto = ''
-			self.srv = [ x for x in arr[0].split(',')]
+			self.srv = [x for x in arr[0].split(',')]
 			self.srv.sort()
 		del arr[0]
 
-		if len(arr): self.action = arr[0]
+		if len(arr):
+			self.action = arr[0]
 
 		if addr2:
 			self.src = addr1
@@ -156,36 +167,38 @@ class PRule:
 			self.src = addr1
 			self.dst = self.parse_addr_args(args.dst)
 		else:
-			debug(self.line,0)
+			debug(self.line, 0)
 			debug("Either too few fields or define either --src IP or --dst IP",0)
 			sys.exit(1)
-		debug("Src = %s" % self.src,3)
-		debug("Dst = %s" % self.dst,3)
-		debug("Srv = %s" % self.srv,3)
-		debug("Action = %s" % self.action,3)
-		debug("Comment = %s" % self.comment,3)
-		
+
+		debug("Src = %s" % self.src, 3)
+		debug("Dst = %s" % self.dst, 3)
+		debug("Srv = %s" % self.srv, 3)
+		debug("Action = %s" % self.action, 3)
+		debug("Comment = %s" % self.comment, 3)
+
+
 class FW:
 	"""
 	General Firewall Class
 	"""
 	
-	devtype='' 				# Device type
-	anyhost='any' 			# String for any host
-	anyservice='any'		# String for any service
-	action={"permit": "permit", "deny": "deny"}	# default actions. Usage:  self.action[rule.action]]
-	predefsvc={}			# Predefined services
-	predefsvcgrp={}			# Predefined service groups
-	netgrp_name='obj_net_' 	# Template for network object-group
-	netgrp_cnt=0 			# network object-group counter shift
-	srvgrp_name='obj_srv_' 	# Template for service object-group
-	srvgrp_cnt=0 			# service object-group counter shift
-	log='' 					# logging
-	comment=''				# comments
+	devtype = ''  # Device type
+	anyhost = 'any'  # String for any host
+	anyservice = 'any'  # String for any service
+	action = {"permit": "permit", "deny": "deny"}  # default actions. Usage:  self.action[rule.action]]
+	predefsvc = {}  # Predefined services
+	predefsvcgrp = {}  # Predefined service groups
+	netgrp_name = 'obj_net_'  # Template for network object-group
+	netgrp_cnt = 0  # network object-group counter shift
+	srvgrp_name = 'obj_srv_'  # Template for service object-group
+	srvgrp_cnt = 0  # service object-group counter shift
+	log = ''  # logging
+	comment = ''  # comments
 
 	re_any = re.compile(r'any|all|0\.0\.0\.0 0\.0\.0\.0|0\.0\.0\.0/0', re.IGNORECASE)
 
-	def rprint(self,policy):
+	def rprint(self, policy):
 		self.fw_header_print()
 		self.fw_netobj_print(policy.netobj)
 		self.fw_srvobj_print(policy.srvobj)
@@ -194,118 +207,131 @@ class FW:
 		self.fw_rules_print(policy)
 		self.fw_footer_print()
 
-	def netobj_add(self,netobj,rule):
-		for addrs in rule.src,rule.dst:
+	def netobj_add(self, netobj, rule):
+		for addrs in rule.src, rule.dst:
 			# Convert a single IP-address to a list
-#			if not type(addrs) is list: addrs=[addrs]
+			# if not type(addrs) is list: addrs=[addrs]
 			for addr in addrs:
 				if addr not in netobj:
 					if self.re_any.search(addr):
-						netobj[addr]  = self.anyhost
-					else: netobj[addr] = self.net2name(netaddr.IPNetwork(re.sub(' ','/',addr)))
+						netobj[addr] = self.anyhost
+					else:
+						netobj[addr] = self.net2name(netaddr.IPNetwork(re.sub(' ', '/', addr)))
 
-	def srvobj_add(self,srvobj,rule):
+	def srvobj_add(self, srvobj, rule):
 		services = rule.srv
-#		if not type(services) is list: services=[services]
+		# if not type(services) is list: services=[services]
 		for srv in services:
 			if srv not in srvobj and srv not in self.predefsvc:
 				if '*' in srv:
 					srvobj[srv] = self.anyservice
 				else:
-					srvobj[srv]=re.sub(':','-',srv)
+					srvobj[srv] = re.sub(':', '-', srv)
 
-	def netgrp_add(self,netgrp,rule):
-		for addrs in rule.src,rule.dst:
+	def netgrp_add(self, netgrp, rule):
+		for addrs in rule.src, rule.dst:
 			if len(addrs) > 1:
 				if tuple(addrs) not in netgrp:
-					objname=self.netgrp_name+str(len(netgrp)+1+self.netgrp_cnt)
-					netgrp[tuple(addrs)]=objname
+					objname = self.netgrp_name + str(len(netgrp) + 1 + self.netgrp_cnt)
+					netgrp[tuple(addrs)] = objname
 
 
-	def srvgrp_add(self,srvgrp,rule):
+	def srvgrp_add(self, srvgrp, rule):
 		if len(rule.srv) > 1:
-			debug("srvgrp_add -- rule.srv",3)
-			debug(rule.srv,3)
-			debug("srvgrp_add -- rule.srv tuple",3)
-			debug(tuple(rule.srv),3)
+			debug("srvgrp_add -- rule.srv", 3)
+			debug(rule.srv, 3)
+			debug("srvgrp_add -- rule.srv tuple", 3)
+			debug(tuple(rule.srv), 3)
 			if tuple(rule.srv) not in srvgrp and tuple(rule.srv) not in self.predefsvcgrp:
-				objname=self.srvgrp_name+str(len(srvgrp)+1+self.srvgrp_cnt)
-				srvgrp[tuple(rule.srv)]=objname
-				
+				objname = self.srvgrp_name + str(len(srvgrp) + 1 + self.srvgrp_cnt)
+				srvgrp[tuple(rule.srv)] = objname
+
 
 	def fw_header_print(self):
 		pass
 
-	def fw_netobj_print(self,netobj):
+	def fw_netobj_print(self, netobj):
 		pass
 
-	def fw_srvobj_print(self,srvobj):
+	def fw_srvobj_print(self, srvobj):
 		pass
 
 	def fw_netgrp_print(self, policy):
 		pass
-		
+
 	def fw_srvgrp_print(self, policy):
 		pass
-				
+	
 	def fw_rules_print(self, policy):
 		pass
-		
+
 	def fw_footer_print(self):
 		pass
 
+	def net2name(self, ip):
+		"""
+		Create object names:
+		h-001.020.003.004  -- for hosts
+		n-001.020.003.000_24 -- for networks
+		net - netaddr.IPNetwork(ip)
+		"""
 		
-# Create object names:
-# h-001.020.003.004  -- for hosts
-# n-001.020.003.000_24 -- for networks			
-# net - netaddr.IPNetwork(ip)
-	def net2name(self,ip):
-		net=str(ip.network)
-		mask=str(ip.prefixlen)
-		if self.ishost(ip): return 'h-' + self.ip2txt(net)
-		else: return 'n-' + self.ip2txt(net) + '_'+mask
+		net = str(ip.network)
+		mask = str(ip.prefixlen)
+		if self.ishost(ip):
+			return 'h-' + self.ip2txt(net)
+		else:
+			return 'n-' + self.ip2txt(net) + '_' + mask
 
-# ip - string IP-address -- 1.2.3.4
-# returns - 001.002.003.004
-	def ip2txt(self,ip):
-		return ".".join(map(self.octet2txt,ip.split('.')))
+	def ip2txt(self, ip):
+		"""
+		ip - string IP-address -- 1.2.3.4
+		returns - 001.002.003.004
+		"""
+		return ".".join(map(self.octet2txt, ip.split('.')))
 
-# octet - string of 0...255 (e.g. 12, 1, 123)
-# returns 012, 001, 123
-	def octet2txt(self,octet):
+	def octet2txt(self, octet):
+		"""
+		octet - string of 0...255 (e.g. 12, 1, 123)
+		returns 012, 001, 123
+		"""
+		
 		if len(octet) < 3:
 			octet = "0" + octet if len(octet) == 2 else "00" + octet
 		return octet
 
-# Returns True if the netmask is 32, and False otherwise
-# ip is a netaddr object
-	def ishost(self,ip):
-		return True if ip.prefixlen == 32 else False		
+	def ishost(self, ip):
+		"""
+		Returns True if the netmask is 32, and False otherwise
+		ip is a netaddr object
+		"""
+		return True if ip.prefixlen == 32 else False
+
 
 class FGT(FW):
 	"""
 	FortiGate specific class
 	"""
 	
-	devtype='fgt'
-	anyhost='all'
-	anyservice='ALL'
-	action={"permit": "accept", "deny": "deny"}
+	devtype = 'fgt'
+	anyhost = 'all'
+	anyservice = 'ALL'
+	action = {"permit": "accept", "deny": "deny"}
 
 	predefsvc = {'tcp:540': 'UUCP', 'udp:1-65535': 'ALL_UDP', 'tcp:70': 'GOPHER', 'IP:89': 'OSPF', 'ip': 'ALL', 'udp:520': 'RIP', 'tcp:1723': 'PPTP', 'udp:67-68': 'DHCP', 'tcp:1720': 'NetMeeting', 'IP:51': 'AH', 'udp:389': 'LDAP_UDP', 'IP:50': 'ESP', 'udp:517-518': 'TALK', 'tcp:465': 'SMTPS', 'IP:47': 'GRE',  'tcp:79': 'FINGER', 'tcp:1433-1434': 'MS-SQL', 'icmp': 'ALL_ICMP', 'tcp:143': 'IMAP', 'tcp:995': 'POP3S', 'tcp:993': 'IMAPS', 'tcp:512': 'REXEC', 'udp:546-547': 'DHCP6', 'tcp:5900': 'VNC', 'tcp:3389': 'RDP', 'tcp:6660-6669': 'IRC', 'udp:1645-1646': 'RADIUS-OLD', 'udp:33434-33535': 'TRACEROUTE', 'tcp:80': 'HTTP', 'tcp:2000': 'SCCP', 'tcp:1863': 'SIP-MSNmessenger', 'tcp:210': 'WAIS', 'ICMP:8': 'PING', 'tcp:389': 'LDAP', 'tcp:21': 'FTP', 'tcp:5190-5194': 'AOL', 'tcp:23': 'TELNET', 'tcp:25': 'SMTP', 'tcp:6000-6063': 'X-WINDOWS', 'tcp:7000-7010': 'VDOLIVE', 'tcp:3128': 'SQUID', 'tcp:0': 'NONE', 'tcp:443': 'HTTPS', 'tcp:445': 'SMB', 'tcp:1-65535': 'ALL_TCP', 'ICMP6:128': 'PING6', 'udp:69': 'TFTP', 'udp:7070': 'RAUDIO', 'udp:1812-1813': 'RADIUS',  'tcp:179': 'BGP', 'udp:514': 'SYSLOG', 'tcp:110': 'POP3', 'tcp:119': 'NNTP', 'ICMP:13': 'TIMESTAMP', 'tcp:3306': 'MYSQL', 'tcp:22': 'SSH', 'icmp:17': 'INFO_ADDRESS', 'tcp:139': 'SAMBA', 'icmp:15': 'INFO_REQUEST'}
 
 	predefsvcgrp = {('tcp:7000-7009', 'udp:7000-7009'): 'AFS3', ('udp:500', 'udp:4500'): 'IKE', ('tcp:1080', 'udp:1080'): 'SOCKS', ('tcp:5631', 'udp:5632'): 'PC-Anywhere', ('tcp:554', 'tcp:7070', 'tcp:8554', 'udp:554'): 'RTSP', ('tcp:111', 'tcp:2049', 'udp:111', 'udp:2049'): 'NFS', ('udp:2427', 'udp:2727'): 'MGCP', ('tcp:1512', 'udp:1512'): 'WINS', ('tcp:2401', 'udp:2401'): 'CVSPSERVER', ('tcp:161-162', 'udp:161-162'): 'SNMP', ('tcp:1720', 'tcp:1503', 'udp:1719'): 'H323', ('tcp:5060', 'udp:5060'): 'SIP', ('tcp:1701', 'udp:1701'): 'L2TP', ('tcp:123', 'udp:123'): 'NTP', ('udp:26000', 'udp:27000', 'udp:27910', 'udp:27960'): 'QUAKE', ('tcp:53', 'udp:53'): 'DNS', ('tcp:88', 'udp:88'): 'KERBEROS', ('tcp:1755', 'udp:1024-5000'): 'MMS', ('tcp:135', 'udp:135'): 'DCE-RPC', ('tcp:111', 'udp:111'): 'ONC-RPC', ('tcp:1494', 'tcp:2598'): 'WINFRAME'}
 
-	def __init__(self,vdom='root',srcintf='any',dstintf='any', label='', log=False, comment='', mg=0):
+	def __init__(self, vdom='root', srcintf='any', dstintf='any', label='', log=False, comment='', mg=0):
 		self.vdom = vdom
 		self.srcintf = srcintf
 		self.dstintf = dstintf
-		self.label=label		# section label
-		self.mingrp=mg			# minimum amount of objects to create a group
+		self.label = label		# section label
+		self.mingrp = mg			# minimum amount of objects to create a group
 		self.log = log
 		self.comment = comment
 
-	def netgrp_add(self,netgrp,rule):
+	def netgrp_add(self, netgrp, rule):
 		pass
 
 	def fw_header_print(self):
@@ -316,12 +342,12 @@ class FGT(FW):
 	def fw_footer_print(self):
 		print('end')
 
-	def fw_rules_print(self,policy):
+	def fw_rules_print(self, policy):
 		print('config firewall policy')
 		policy.srvobj.update(self.predefsvc)
 		for rule in policy.policy:
-			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
-			if "comment" in rule.type: 
+			debug("Rule %d Orig line = %s" % (rule.num, rule.origline), 2)
+			if "comment" in rule.type:
 				self.label = rule.comment
 				next
 			print(' edit %s' % rule.num)
@@ -341,26 +367,28 @@ class FGT(FW):
 				else:
 					print('  set logtraffic all')
 			if self.comment or rule.comment:
-				print('  set comments "'+ self.comment + ' ' + rule.comment + '"')
+				print('  set comments "' + self.comment + ' ' + rule.comment + '"')
 			print(' next')
 		print('end')
 
-	def fw_netobj_print(self,netobj):
+	def fw_netobj_print(self, netobj):
 		print('config firewall address')
 		for obj in netobj:
-			print(' edit '+ netobj[obj])
+			print(' edit ' + netobj[obj])
 			print('  set subnet ' + obj)
 			print(' next')
 		print('end')
 
-	def fw_srvobj_print(self,srvobj):
+	def fw_srvobj_print(self, srvobj):
 		print('config firewall service custom')
 		for obj in srvobj:
-			if not '*' in obj:
+			if '*' not in obj:
 				# For some reason the following construction does not work
 				# proto,ports = obj.split(':') if ':' in obj else obj,''
-				if ':' in obj:	proto,ports = obj.split(':')
-				else: proto,ports = obj,''
+				if ':' in obj:
+					proto, ports = obj.split(':')
+				else:
+					proto, ports = obj, ''
 				print(' edit ' + srvobj[obj])
 				if 'udp' in proto or 'tcp' in proto:
 					print('  set protocol TCP/UDP/SCTP')
@@ -379,27 +407,29 @@ class FGT(FW):
 				print(' next')
 		print('end')
 
+
 class ASA(FW):
 	"""
 	ASA specific class
 	"""
 	
-	devtype='asa'
-	anyhost='any'
-	
+	devtype = 'asa'
+	anyhost = 'any'
 
-	def __init__(self,aclname='Test_ACL', log=False, comment=''):
-		self.aclname=aclname
-		if log: self.log = "log"
+
+	def __init__(self, aclname='Test_ACL', log=False, comment=''):
+		self.aclname = aclname
+		if log:
+			self.log = "log"
 		self.comment = comment
 
-	def netobj_add(self,netobj,rule):
+	def netobj_add(self, netobj, rule):
 		pass
 
-	def srvobj_add(self,srvobj,rule):
+	def srvobj_add(self, srvobj, rule):
 		pass
 
-	def fw_rules_print(self,policy):
+	def fw_rules_print(self, policy):
 		if self.comment:
 			print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", self.comment]))
 		for rule in policy.policy:
@@ -407,24 +437,24 @@ class ASA(FW):
 			if "comment" in rule.type:
 				print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment]))
 			else:
-				if  rule.comment:
+				if rule.comment:
 					print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "remark", rule.comment]))
-				print (' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", self.action[rule.action],
+				print(' '.join(["access-list", self.aclname, "line %s" % rule.num, "extended", self.action[rule.action],
 								 self.rule_proto(rule), self.rule_addr(rule.src), self.rule_addr(rule.dst), self.rule_port(rule), self.log]))
 
-	def rule_proto(self,rule):
+	def rule_proto(self, rule):
 		if len(rule.srv) > 1:
 			return 'object-group ' + policy.srvgrp[tuple(rule.srv)]
 		else:
 			return self.protocol(rule.srv[0])
 
-	def rule_port(self,rule):
+	def rule_port(self, rule):
 		if len(rule.srv) > 1:
 			return ''
 		else:
 			return self.port(rule.srv[0])
 
-	def rule_addr(self,addr):
+	def rule_addr(self, addr):
 		if len(addr) > 1:
 			return 'object-group ' + policy.netgrp[tuple(addr)]
 		else:
@@ -437,22 +467,22 @@ class ASA(FW):
 		print('wri')
 		print('exit')
 
-	def fw_netgrp_print(self,netgrp):
+	def fw_netgrp_print(self, netgrp):
 		for addrs in netgrp:
-			print('object-group network',netgrp[tuple(addrs)])
+			print('object-group network', netgrp[tuple(addrs)])
 			for addr in addrs:
-				print(' network-object',addr)
+				print(' network-object', addr)
 
-	def fw_srvgrp_print(self,srvgrp):
+	def fw_srvgrp_print(self, srvgrp):
 		for svcs in srvgrp:
-			print('object-group service',srvgrp[tuple(svcs)])
+			print('object-group service', srvgrp[tuple(svcs)])
 			for svc in svcs:
 				if 'icmp' in self.protocol(svc):
-					print(' service-object',self.protocol(svc),'icmp_type',self.port(svc))
+					print(' service-object', self.protocol(svc), 'icmp_type', self.port(svc))
 				else:
-					print(' service-object',self.protocol(svc),'destination',self.port(svc))
+					print(' service-object', self.protocol(svc), 'destination', self.port(svc))
 
-	def protocol(self,service):
+	def protocol(self, service):
 		if "*" in service:
 			return "ip"
 		elif ":" in service:
@@ -461,70 +491,72 @@ class ASA(FW):
 		else:
 			return service
 
-	def port(self,service):
+	def port(self, service):
 		if ":" in service:
 			tmp = service.split(":")
 			if "-" in tmp[1]:
-				low,high = tmp[1].split("-")
+				low, high = tmp[1].split("-")
 				if int(low) == 1:
-					return "lt " +high
+					return "lt " + high
 				elif int(high) == 65535:
-					return "gt " +low
+					return "gt " + low
 				else:
-					return "range "+low+" "+high
+					return "range " + low + " " + high
 			elif "icmp" not in tmp[0]:
-				return "eq "+tmp[1]
+				return "eq " + tmp[1]
 			else:
 				return tmp[1]
 		else:
 			return ''
+
 
 class R77(FW):
 	"""
 	CheckPoint R77 specific class
 	"""
 	
-	devtype='R77'
-	anyhost="globals:Any"
-	anyservice="globals:Any"
-	action={"permit": "accept_action:accept", "deny": "drop_action:drop"}
-	#re_newline=re.compile(r'(\\n$)|(\\n\\$)')
-	re_newline=re.compile(r'(\n$)|(\n\$)')
+	devtype = 'R77'
+	anyhost = "globals:Any"
+	anyservice = "globals:Any"
+	action = {"permit": "accept_action:accept", "deny": "drop_action:drop"}
+	# re_newline=re.compile(r'(\\n$)|(\\n\\$)')
+	re_newline = re.compile(r'(\n$)|(\n\$)')
 	
 	def __init__(self, policy='test', log=False, comment="", nodbedit=False, mg=0):
 		self.policy = policy	# policy name
-#		self.rulenum=rulenum 	# begin with this rule number: edit rulenum
-#		self.label=label		# section label
+		# self.rulenum=rulenum 	# begin with this rule number: edit rulenum
+		# self.label=label		# section label
 		self.log = log
 		self.comment = comment
-		self.nodbedit=nodbedit
-		self.mingrp=mg
+		self.nodbedit = nodbedit
+		self.mingrp = mg
 
-# Gets a (str) line and wraps it in 
+
+# Gets a (str) line and wraps it in
 # 'echo -e ' line '\nupdate_all\\n-q\\n" | dbedit -local'
 	def dbedit(self, line):
-		if self.nodbedit: print(self.re_newline.sub("",line))
+		if self.nodbedit: print(self.re_newline.sub("", line))
 		else: print('echo -e \"' + line + '\\nupdate_all\\n-q\\n" | dbedit -local')
 		
-	def fw_netobj_print(self,netobj):		
+	def fw_netobj_print(self, netobj):
 		for obj in netobj:
 			debug("fw_netobj_print  -- obj",3)
-			debug(obj,3)
+			debug(obj, 3)
 			if not 'any' in obj:
-				ip,mask=obj.split()
+				ip, mask = obj.split()
 				if '255.255.255.255' in mask:
 					self.dbedit("create host_plain %s" % netobj[obj])
 					self.dbedit("modify network_objects {0!s} ipaddr {1!s}".format(netobj[obj],obj.split()[0]))
 				else:
 					self.dbedit("create network %s" % netobj[obj])
-					ip,mask=obj.split()
+					ip, mask = obj.split()
 					self.dbedit("modify network_objects {0!s} ipaddr {1!s}\\nmodify network_objects {0!s} netmask {2!s}".format(netobj[obj],ip,mask))
 				
 
-	def fw_srvobj_print(self,srvobj):
+	def fw_srvobj_print(self, srvobj):
 		for obj in srvobj:
 			debug("fw_srvobj_print  -- obj",3)
-			debug(obj,3)
+			debug(obj, 3)
 			if not '*' in obj:
 				# For some reason the following construction does not work
 				# proto,ports = obj.split(':') if ':' in obj else obj,''
@@ -545,9 +577,9 @@ class R77(FW):
 				else:
 					print('# %s is not implemented' % proto)
 
-	def fw_rules_print(self,policy):
+	def fw_rules_print(self, policy):
 		policy.srvobj.update(self.predefsvc)
-		dbline="" 
+		dbline = ""
 		for rule in policy.policy:
 			debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
 			if "comment" in rule.type: 
@@ -594,7 +626,7 @@ class Policy():
 		self.device = dev
 		self.rulenum = rulenum	#current rule number counter
 
-	def addrule(self,rule):
+	def addrule(self, rule):
 		self.policy.append(rule)
 		rule.num = self.rulenum
 		debug("Rule %d Orig line = %s" % (rule.num, rule.origline),2)
