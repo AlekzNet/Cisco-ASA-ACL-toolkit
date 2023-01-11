@@ -1,2 +1,2 @@
 ---
-*2020-01-11* CHANGELOG creation
+**2020-01-11** CHANGELOG creation
