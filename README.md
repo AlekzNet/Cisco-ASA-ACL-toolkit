@@ -170,10 +170,6 @@ Generate a FortiGate policy from all Cisco ASA ACL's that permit traffic from 10
 $ ipaclmatch.py -p -s -a 10.0.0.1 --permit test.acl | optimacl.py | genacl.py --dev fgt
 
 ```
-Convert Cisco access-control lists from the saved ASA configuration file into HTML:
 
-```txt
-$ asaconf.py --html myfw.conf > myfw.html
-```
 
 
