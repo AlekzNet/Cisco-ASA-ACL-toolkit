@@ -23,7 +23,7 @@ Important! This program set is under active development. Hence expect bugs. Plea
 ## Requirements
 
 * Expect (for the data collector)
-* Python 2.7
+* Python 2.7 for ...2 files and 3.10 for the rest
 * Netaddr
 
 Install netaddr:
