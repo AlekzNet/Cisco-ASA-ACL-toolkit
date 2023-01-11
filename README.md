@@ -31,6 +31,12 @@ Install netaddr:
 ```sh
 pip install netaddr
 ```
+or (for Ubuntu):
+
+```sh
+apt install python3-netaddr
+```
+
 ## Limitations
 
 The following is not supported:
