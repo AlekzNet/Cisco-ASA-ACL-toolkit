@@ -18,7 +18,7 @@ try:
 	import pprint
 except ImportError:
 	print('ERROR: pprint module not found. Either install pprint with \"pip install pprint\" \n or replace '
-	      'pprint.pprint with print (the debug function)', file=sys.stderr)
+		  'pprint.pprint with print (the debug function)', file=sys.stderr)
 	sys.exit(1)
 
 
@@ -42,15 +42,15 @@ def fillobj(obj, key, val):
 	"""
 	Add new services or networks to the object
 	:param obj:
-	:param key:
-	:param val:
+	:param key: object name
+	:param val: object value
 	"""
 	obj[key].append(val)
 
 
 def unfold(objarr):
 	"""
-	Iterate through all objects in netgrp or srvgrp
+	Iterate through all objects in netgrp, srvgrp or prtgrp
 	"""
 	debug(objarr, 2)
 	for obj in objarr:
@@ -63,6 +63,9 @@ def unfold(objarr):
 def unfold_rec(obj, objarr, index=0):
 	"""
 	Unfold all included objects
+	objarr{} - netgrp, srvgrp, prtgrp
+	obj[] - curent object from objarr{} to unfold
+	index - curent index of objects in obj[]
 	"""
 	# We are starting with the index from the previous iteration
 	debug("unfold_rec", 4)
@@ -133,7 +136,7 @@ class Rule:
 		self.src = []
 		self.dst = []
 		self.srv = []
-		self.proto = ''
+		self.proto = []
 		self.action = ''
 		self.rem = ''
 		self.isinactive = False
@@ -148,12 +151,16 @@ class Rule:
 		self.line = re.sub(r'\bany\b|\bany4\b', '0.0.0.0 0.0.0.0', self.line)
 	
 	def parse(self):
+		"""
+		access-list line parser
+		"""
 		if Rule.re_acl_rem.search(self.line):
 			# Found Remarked ACL
 			# Was the prev rule also remarked? If yes, add <br>
 			if Rule.remark:
 				Rule.remark += '<br />'
 			Rule.remark += Rule.re_acl_rem.search(line).group('acl_rem')
+			debug(f"Rule.remark = {Rule.remark}", 3)
 		else:
 			# Clean the remarks
 			self.rem = Rule.remark
@@ -164,13 +171,29 @@ class Rule:
 			# Permit or deny
 			self.action = arr[3]
 			del arr[0:4]
+			debug(f'Rule number {self.lnum}', 3)
+			debug(arr, 3)
+			
+			""" Protocol or service """
+			
 			if 'object-group' in arr[0]:
+				if arr[1] in prtgrp:
+					self.proto = prtgrp[arr[1]]
+				else:
+					self.srv = srvgrp[arr[1]]
+				debug(f"srv = service object group {arr[1]} {self.srv}", 4)
+				del arr[0:2]
+			elif 'object' in arr[0]:
 				self.srv = srvgrp[arr[1]]
+				debug(f"srv = object {arr[1]} {self.srv}", 4)
 				del arr[0:2]
 			else:
-				self.proto = arr[0]
+				self.proto.append(arr[0])
+				debug(f"proto = {self.proto}", 4)
 				del arr[0]
-			# Source
+			
+			""" Source """
+			
 			if 'object-group' in arr[0]:
 				self.src = netgrp[arr[1]]
 			elif 'object' in arr[0]:
@@ -179,12 +202,16 @@ class Rule:
 				self.src = [netaddr.IPNetwork(arr[1] + '/32')]
 			else:
 				self.src = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
+			debug("Source: %s" % self.src, 3)
 			del arr[0:2]
 			# Source ports are not supported
-			if "range" in arr[0]: del arr[0:3]
+			if "range" in arr[0]:
+				del arr[0:3]
 			if "eq" in arr[0] or "lt" in arr[0] or "gt" in arr[0] or "neq" in arr[0]:
 				del arr[0:2]
-			# Destination
+			
+			""" Destination """
+			
 			if 'object-group' in arr[0]:
 				self.dst = netgrp[arr[1]]
 			elif 'object' in arr[0]:
@@ -194,14 +221,16 @@ class Rule:
 			else:
 				self.dst = [netaddr.IPNetwork(arr[0] + '/' + arr[1])]
 			del arr[0:2]
-			# Services
+			
+			"""  Services """
+			
 			if len(arr) > 0:
 				if 'object-group' in arr[0]:
 					self.srv = srvgrp[arr[1]]
 				else:
-					self.srv = [self.proto + ':' + ' '.join(arr[:])]
+					self.srv = [','.join(self.proto) + ':' + ' '.join(arr[:])]
 			elif not self.srv:
-				self.srv = [self.proto]
+				self.srv = self.proto
 	
 	def rprint(self):
 		"""
@@ -213,47 +242,49 @@ class Rule:
 					for srv in self.srv:
 						proto, ports = srv.split(":") if ":" in srv else [srv, '']
 						print('access-list ' + self.name + ' line ' + str(self.lnum) + ' extended ' +
-						      ' '.join(
-							      [self.action, proto, str(src.ip), str(src.netmask), str(dst.ip), str(dst.netmask),
-							       ports]))
+							  ' '.join(
+								  [self.action, proto, str(src.ip), str(src.netmask), str(dst.ip), str(dst.netmask),
+								   ports]))
 			self.rem = ''
 	
 	def html(self):
 		"""
-		Print rule as an HTML table row
+		Print the rule as an HTML table row
 		"""
 		if not Rule.remark:
 			# Are there accumulated comments?
 			if self.rem:
 				print('<tr><td colspan=5>' + self.rem + '</td></tr>')
-			print('<tr><td>' + str(self.lnum) + '</td>' + self.html_obj(self.src) +
-			      self.html_obj(self.dst) + self.html_obj(self.srv) + '<td>' + self.html_color_action(self.action) +
-			      '</td></tr>')
+			print(f'<tr>{self.html_lnum()} {self.html_obj(self.src)} {self.html_obj(self.dst)}'
+				  f'{self.html_obj(self.proto)} {self.html_obj(self.srv)} {self.html_action(self.action)}</tr>')
 	
-	def html_color_action(self, act):
+	def html_action(self, act):
 		"""
 		Highlight the action in green or red
 		"""
 		if 'permit' in act:
-			return '<span class=permit>' + act + '</span>'
+			return '<td><span class=permit>' + act + '</span></td>'
 		else:
-			return '<span class=deny>' + act + '</span>'
+			return '<td><span class=deny>' + act + '</span></td>'
 	
 	def html_obj(self, obj):
 		"""
 		Print out the content of the object-group with <br /> in between
 		"""
-		debug("Function: html_obj", 4)
-		debug(obj, 4)
+		debug(f"html_obj {obj}", 4)
+		#debug(obj, 4)
 		return '<td>' + '<br />'.join(map(lambda x: str(x), obj)) + '</td>'
+	
+	def html_lnum(self):
+		return f'<td>{self.lnum}</td>'
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("conf", default="-", nargs="?",
-                    help='Cisco ASA conf filename or "-" to read from the console (default)')
+					help='Cisco ASA conf filename or "-" to read from the console (default)')
 parser.add_argument("-v", "--verbose", default=0,
-                    help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv',
-                    action="count")
+					help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv',
+					action="count")
 out = parser.add_mutually_exclusive_group()
 out.add_argument('--html', default=True, help="Cisco policy to HTML", action="store_true")
 out.add_argument('--acl', default=False, help="Cisco policy to sh access-list", action="store_true")
@@ -265,6 +296,7 @@ if args.acl:
 netobj = {}  # network-objects
 netgrp = {}  # network-groups
 srvgrp = {}  # service-groups
+prtgrp = {}  # protocol-groups
 aclmode = False
 rulecnt = 0  # ACL rule counter
 curacl = ''  # current ACL name
@@ -276,10 +308,15 @@ aclnames = {}  # ACL names and interfaces
 
 # hostname fw_name
 re_hostname = re.compile(r'^\s*hostname\s+(?P<hostname>\S+)', re.IGNORECASE)
+
+""" Network objects"""
+
 # object network mynet1
 re_objnet = re.compile(r'^\s*object\s+network\s+(?P<obj_name>\S+)', re.IGNORECASE)
 # subnet 10.1.2.0 255.255.255.0
 re_subnet = re.compile(r'^\s*subnet\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.IGNORECASE)
+# range 10.1.2.1 10.1.3.2
+re_range = re.compile(r'^\s*range\s+(?P<ip1>\S+)\s+(?P<ip2>\S+)', re.IGNORECASE)
 # host 10.2.1.41
 re_host = re.compile(r'^\s*host\s+(?P<ip>\S+)', re.IGNORECASE)
 # object-group network mynetgrp1
@@ -290,22 +327,43 @@ re_netobj = re.compile(r'^\s*network-object\s+(?P<ip>\S+)\s+(?P<mask>\S+)', re.I
 re_netobj_host = re.compile(r'^\s*network-object\s+host\s+(?P<ip>\S+)', re.IGNORECASE)
 # network-object object mynet1
 re_netobj_obj = re.compile(r'^\s*network-object\s+object\s+(?P<obj_name>\S+)', re.IGNORECASE)
+# group-object net-10.1.0.0-16
+re_grpobj = re.compile(r'^\s*group-object\s+(?P<grp_obj>\S+)', re.IGNORECASE)
+
+""" Protocol """
+
+# object-group protocol protogrp
+re_protogrp = re.compile(r'^\s*object-group\s+protocol\s+(?P<prt_grp>\S+)\s*$', re.IGNORECASE)
+# protocol-object udp
+re_protobj = re.compile(r'^\s*protocol-object\s+(?P<prt_obj>\S+)\s*$', re.IGNORECASE)
+
+""" Service """
+
 # object-group service mysrvgrp1
 re_srvgrp = re.compile(r'^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s*$', re.IGNORECASE)
 # object-group service srv_tcp tcp
 re_srvgrp_proto = re.compile(r'^\s*object-group\s+service\s+(?P<srv_grp>\S+)\s+(?P<proto>\S+)', re.IGNORECASE)
 # port-object eq ldaps
 re_portobj = re.compile(r'^\s*port-object\s+(?P<service>.*$)', re.IGNORECASE)
-# group-object net-10.1.0.0-16
-re_grpobj = re.compile(r'^\s*group-object\s+(?P<grp_obj>\S+)', re.IGNORECASE)
 # service-object tcp destination eq 123
 re_srvobj = re.compile(r'^\s*service-object\s+(?P<proto>\S+)(\s+destination)?\s+(?P<service>.*$)', re.IGNORECASE)
 # service-object 97
 re_srvobj_ip = re.compile(r'^\s*service-object\s+(?P<proto>\d+)', re.IGNORECASE)
+# service-object object srvname
+re_srvobj_obj = re.compile(r'^\s*service-object\s+object\s+(?P<srv_obj>\S+)\s*$', re.IGNORECASE)
+# object service srvname
+re_objsrv = re.compile(r'^\s*object\s+service\s+(?P<srv_obj>\S+)\s*$', re.IGNORECASE)
+# service tcp destination eq 123
+re_srvobj_1 = re.compile(r'^\s*service\s+(?P<proto>\S+)(\s+destination)?\s+(?P<service>.*$)', re.IGNORECASE)
+
+""" ACL type """
+
 # access-list ... inactive
 re_isinactive = re.compile(r'^\s*access-list\s.*\sinactive\s*$', re.IGNORECASE)
 # access-list acl_name extended ...
 re_isacl = re.compile(r'^\s*access-list\s+\S+\s+extended', re.IGNORECASE)
+# description .....
+re_descr = re.compile(r'^\s*description\s+.*', re.IGNORECASE)
 
 # access-list name
 re_aclname = re.compile(r'^\s*access-list\s+(?P<acl_name>\S+)\s+', re.IGNORECASE)
@@ -319,18 +377,19 @@ for line in f:
 	line = line.strip()
 	debug(line, 3)
 	# Parsing and filling in the network and service objects
-	if re_isinactive.match(line):
-		print(line + " -- ignored\n")
+	if re_isinactive.match(line) or re_descr.match(line):
+		debug(f"{line} -- ignored")
 		continue
 	if not aclmode:
-		debug("Not ACL mode", 4)
 		if args.html and re_hostname.search(line):
 			html_hdr(re_hostname.search(line).group('hostname'))
 		elif re_objnet.search(line):
 			newobj(netobj, re_objnet.search(line).group('obj_name'))
 		elif re_subnet.search(line):
 			curobj[curname] = netaddr.IPNetwork(re_subnet.search(line).group('ip') +
-			                                    '/' + re_subnet.search(line).group('mask'))
+												'/' + re_subnet.search(line).group('mask'))
+		elif re_range.search(line):
+			curobj[curname] = netaddr.IPRange(re_range.search(line).group('ip1'), re_range.search(line).group('ip2'))
 		elif re_host.search(line):
 			curobj[curname] = netaddr.IPNetwork(re_host.search(line).group('ip') + '/32')
 		elif re_netgrp.search(line):
@@ -341,14 +400,25 @@ for line in f:
 			fillobj(curobj, curname, 'net-object ' + re_netobj_obj.search(line).group('obj_name'))
 		elif re_netobj.search(line):
 			fillobj(curobj, curname, netaddr.IPNetwork(re_netobj.search(line).group('ip') +
-			                                           '/' + re_netobj.search(line).group('mask')))
+													   '/' + re_netobj.search(line).group('mask')))
+		elif re_protogrp.search(line):
+			newobj(prtgrp, re_protogrp.search(line).group('prt_grp'))
+		elif re_protobj.search(line):
+			fillobj(curobj, curname, re_protobj.search(line).group('prt_obj'))
 		elif re_srvgrp.search(line):
 			newobj(srvgrp, re_srvgrp.search(line).group('srv_grp'))
+		elif re_objsrv.search(line):
+			newobj(srvgrp, re_objsrv.search(line).group('srv_obj'))
 		elif re_grpobj.search(line):
 			fillobj(curobj, curname, 'object-group ' + re_grpobj.search(line).group('grp_obj'))
+		elif re_srvobj_obj.search(line):
+			fillobj(curobj, curname, re_srvobj_obj.search(line).group('srv_obj'))
 		elif re_srvobj.search(line):
 			fillobj(curobj, curname, re_srvobj.search(line).group('proto') + ':' +
-			        re_srvobj.search(line).group('service'))
+					re_srvobj.search(line).group('service'))
+		elif re_srvobj_1.search(line):
+			fillobj(curobj, curname, re_srvobj_1.search(line).group('proto') + ':' +
+					re_srvobj_1.search(line).group('service'))
 		elif re_srvgrp_proto.search(line):
 			newobj(srvgrp, re_srvgrp_proto.search(line).group('srv_grp'))
 			curproto = re_srvgrp_proto.search(line).group('proto')
@@ -362,10 +432,11 @@ for line in f:
 			unfold(netgrp)
 			debug("srvgrp", 2)
 			unfold(srvgrp)
+			debug("prtgrp", 2)
+			unfold(prtgrp)
 	
 	# Parsing access-lists
 	if aclmode:
-		debug("ACL mode", 4)
 		if re_aclname.search(line):
 			newacl = re_aclname.search(line).group('acl_name')
 			if not curacl == newacl:
