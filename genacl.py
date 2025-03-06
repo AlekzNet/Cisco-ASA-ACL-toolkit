@@ -149,7 +149,7 @@ class PRule:
 		if ',' not in arr[0]:
 			self.srv = [arr[0]]
 		else:
-			self.proto = ''
+#			self.proto = ''
 			self.srv = [x for x in arr[0].split(',')]
 			self.srv.sort()
 		del arr[0]
@@ -585,24 +585,24 @@ class R77(FW):
 			if "comment" in rule.type: 
 				self.label = rule.comment
 				next
-			dbline = "addelement fw_policies ##{0!s} rule security_rule\\n\ \n".format(self.policy)
+			dbline = "addelement fw_policies ##{0!s} rule security_rule\\n \n".format(self.policy)
 			dbline += "addelement fw_policies ##{0!s} rule:{1}:action {2!s}\\n \n".format(self.policy,rule.num,self.action[rule.action])
-			dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n\ \n".format(self.policy,rule.num,rule.comment)
-			dbline += "modify fw_policies ##{0!s} rule:{1}:name \"\"\\n\ \n".format(self.policy,rule.num)
+			dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n \n".format(self.policy,rule.num,rule.comment)
+			dbline += "modify fw_policies ##{0!s} rule:{1}:name \"\"\\n \n".format(self.policy,rule.num)
 			for ip in rule.src:
-				dbline += "addelement fw_policies ##{0!s} rule:{1}:src:\'\' network_objects:{2!s}\\n\ \n".format(self.policy,rule.num,policy.netobj[ip])
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:src:\'\' network_objects:{2!s}\\n \n".format(self.policy,rule.num,policy.netobj[ip])
 			for ip in rule.dst:
-				dbline += "addelement fw_policies ##{0!s} rule:{1}:dst:\'\' network_objects:{2!s}\\n\ \n".format(self.policy,rule.num,policy.netobj[ip])		
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:dst:\'\' network_objects:{2!s}\\n \n".format(self.policy,rule.num,policy.netobj[ip])		
 			for srv in rule.srv:
-				dbline += "addelement fw_policies ##{0!s} rule:{1}:services:\'\' services:{2!s}\\n\ \n".format(self.policy,rule.num,policy.srvobj[srv])	
+				dbline += "addelement fw_policies ##{0!s} rule:{1}:services:\'\' services:{2!s}\\n \n".format(self.policy,rule.num,policy.srvobj[srv])	
 
 			if self.log:
 				if type(self.log) is string and "disable" in self.log:
-					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n\ \n".format(self.policy,rule.num,"tracks:None")
+					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n \n".format(self.policy,rule.num,"tracks:None")
 				else:
-					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n\ \n".format(self.policy,rule.num,"tracks:Log")
+					dbline += "modify fw_policies ##{0!s} rule:{1}:track {2!s}\\n \n".format(self.policy,rule.num,"tracks:Log")
 			if self.comment or rule.comment:
-				dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n\ \n".format(self.policy,rule.num,rule.comment)
+				dbline += "modify fw_policies ##{0!s} rule:{1}:comments \"{2!s}\"\\n \n".format(self.policy,rule.num,rule.comment)
 			self.dbedit(dbline)
 			dbline = ""
 
@@ -648,6 +648,7 @@ class Policy():
 		debug("  %d network objects" % len(self.netobj), 1)
 		debug(self.netobj, 2)
 		debug("  %d network groups" % len(self.netgrp), 1)
+		debug("self.netgrp = %s" % self.netgrp, 2)
 		debug(self.netgrp, 2)
 		debug("  %d service objects" % len(self.srvobj), 1)
 		debug(self.srvobj, 2)
@@ -661,7 +662,9 @@ class Policy():
 
 parser = argparse.ArgumentParser(description='Creates Cisco ASA or Fortigate policy')
 parser.add_argument('pol', default="-", nargs='?', help="Firewall policy or \"-\" to read from the console (default)")
-parser.add_argument('-v','--verbose', default=0, help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv', action='count')
+parser.add_argument('-v', '--verbose', default=0,
+					help='Verbose mode. Messages are sent to STDERR.\n To increase the level add "v", e.g. -vvv',
+					action='count')
 sd = parser.add_mutually_exclusive_group()
 sd.add_argument('-s','--src', default=False, help="Source IP-address/netmask or object name")
 sd.add_argument('-d','--dst', default=False, help="Destination IP-address/netmasks or object name")
@@ -702,7 +705,7 @@ elif 'r77' in args.dev:
 	if args.nolog: args.log = "disable"
 	dev = R77(args.policy, args.log, args.comment, args.nodbedit)
 else:
-	print(dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)", file=sys.stderr)
+	print(args.dev, "is not supported. It should be: asa (Cisco ASA), fgt (FortiGate) or r77 (CheckPOint R77)", file=sys.stderr)
 	sys.exit(1)
 
 policy = Policy(dev, args.rn)
